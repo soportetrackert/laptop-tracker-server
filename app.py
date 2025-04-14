@@ -1,3 +1,16 @@
+import os
+import json
+import time
+from flask import Flask, request, render_template
+from datetime import datetime
+
+app = Flask(__name__)
+
+# Asegura la carpeta de subida
+UPLOAD_FOLDER = 'static/uploads'
+if not os.path.exists(UPLOAD_FOLDER):
+    os.makedirs(UPLOAD_FOLDER)
+
 @app.route('/report', methods=['POST'])
 def report():
     ip = request.form.get('ip')
@@ -10,7 +23,7 @@ def report():
     image_filename = None
     if image:
         image_filename = f"{int(time.time())}.jpg"
-        image.save(os.path.join('static', image_filename))
+        image.save(os.path.join(UPLOAD_FOLDER, image_filename))
 
     report_data = {
         "ip": ip,
@@ -19,6 +32,11 @@ def report():
         "timestamp": timestamp,
         "image": image_filename
     }
+
+    # Asegura que el archivo JSON exista
+    if not os.path.exists("reportes.json"):
+        with open("reportes.json", "w") as f:
+            json.dump([], f)
 
     with open("reportes.json", "r") as f:
         data = json.load(f)
@@ -29,4 +47,5 @@ def report():
         json.dump(data, f, indent=2)
 
     return "Reporte recibido", 200
+
 
