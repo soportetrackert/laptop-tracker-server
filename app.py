@@ -1,27 +1,32 @@
 @app.route('/report', methods=['POST'])
 def report():
-    try:
-        image = request.files.get('image')
-        ip = request.form.get('ip') or request.files.get('ip').read().decode()
-        username = request.form.get('username') or request.files.get('username').read().decode()
-        system_info_raw = request.form.get('system_info') or request.files.get('system_info').read().decode()
+    ip = request.form.get('ip')
+    username = request.form.get('username')
+    system_info = request.form.get('system_info')
+    image = request.files.get('image')
 
-        timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        image_path = ''
+    timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
-        if image and '.' in image.filename:
-            filename = secure_filename(f"{datetime.now().strftime('%Y%m%d%H%M%S')}_{image.filename}")
-            image.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-            image_path = filename
+    image_filename = None
+    if image:
+        image_filename = f"{int(time.time())}.jpg"
+        image.save(os.path.join('static', image_filename))
 
-        with sqlite3.connect("database.db") as conn:
-            cursor = conn.cursor()
-            cursor.execute("INSERT INTO reports (ip, username, system_info, timestamp, image_path) VALUES (?, ?, ?, ?, ?)",
-                           (ip, username, system_info_raw, timestamp, image_path))
-            conn.commit()
+    report_data = {
+        "ip": ip,
+        "username": username,
+        "system_info": system_info,
+        "timestamp": timestamp,
+        "image": image_filename
+    }
 
-        return "Reporte recibido", 200
-        "Arreglando endpoint /report para leer bien los datos"
+    with open("reportes.json", "r") as f:
+        data = json.load(f)
 
-    except Exception as e:
-        return f"[!] Error al procesar el reporte: {e}", 500
+    data.insert(0, report_data)
+
+    with open("reportes.json", "w") as f:
+        json.dump(data, f, indent=2)
+
+    return "Reporte recibido", 200
+
