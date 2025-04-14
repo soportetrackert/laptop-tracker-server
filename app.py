@@ -21,6 +21,7 @@ def report():
             conn.commit()
 
         return "Reporte recibido", 200
+        "Arreglando endpoint /report para leer bien los datos"
 
     except Exception as e:
         return f"[!] Error al procesar el reporte: {e}", 500
