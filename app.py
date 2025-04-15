@@ -33,7 +33,7 @@ def index():
             r.get("image", None)
         ])
 
-    return render_template("panel.html", reports=reports)
+    return render_template("index.html", reports=reports)
 
 @app.route('/report', methods=['POST'])
 def report():
