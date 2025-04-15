@@ -1,47 +1,65 @@
+from flask import Flask, render_template, request, redirect, url_for, session, send_from_directory
+from datetime import datetime
+import json
 import os
 import time
-import json
-from datetime import datetime
-from flask import Flask, request, render_template, redirect, url_for, session, send_from_directory
 
 app = Flask(__name__)
-app.secret_key = "clave-secreta"
-UPLOAD_FOLDER = 'static/uploads'
+app.secret_key = 'clave_secreta'
 
-# Crear carpeta si no existe
+UPLOAD_FOLDER = 'static/uploads'
 if not os.path.exists(UPLOAD_FOLDER):
     os.makedirs(UPLOAD_FOLDER)
 
-@app.route('/')
-def index():
-    if not session.get('logged_in'):
-        return redirect(url_for('login'))
-    with open("reportes.json", "r") as f:
-        data = json.load(f)
-    reports = []
-    for idx, d in enumerate(data, 1):
-        reports.append([
-            idx,
-            d.get("ip"),
-            d.get("username"),
-            json.loads(d.get("system_info", "{}")).get("sistema"),
-            d.get("timestamp"),
-            d.get("image")
-        ])
-    return render_template("index.html", reports=reports)
+# Credenciales
+USUARIO = "admin"
+CONTRASENA = "1234"
 
-@app.route('/login', methods=["GET", "POST"])
+@app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
-        if request.form["usuario"] == "admin" and request.form["clave"] == "1234":
-            session["logged_in"] = True
+        username = request.form.get("username")
+        password = request.form.get("password")
+        if username == USUARIO and password == CONTRASENA:
+            session["autenticado"] = True
             return redirect(url_for("index"))
+        else:
+            return "Credenciales inválidas", 401
     return render_template("login.html")
 
 @app.route("/logout")
 def logout():
-    session["logged_in"] = False
+    session.pop("autenticado", None)
     return redirect(url_for("login"))
+
+@app.route("/")
+def index():
+    if not session.get("autenticado"):
+        return redirect(url_for("login"))
+
+    if not os.path.exists("reportes.json"):
+        with open("reportes.json", "w") as f:
+            json.dump([], f)
+
+    with open("reportes.json", "r") as f:
+        data = json.load(f)
+
+    reports = []
+    for i, reporte in enumerate(data):
+        reports.append([
+            i + 1,
+            reporte.get("ip"),
+            reporte.get("username"),
+            reporte.get("system_info"),
+            reporte.get("timestamp"),
+            reporte.get("image")
+        ])
+
+    return render_template("index.html", reports=reports)
+
+@app.route('/uploads/<filename>')
+def uploaded_file(filename):
+    return send_from_directory(UPLOAD_FOLDER, filename)
 
 @app.route('/report', methods=['POST'])
 def report():
@@ -51,6 +69,7 @@ def report():
     image = request.files.get('image')
 
     timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+
     image_filename = None
     if image:
         image_filename = f"{int(time.time())}.jpg"
@@ -78,11 +97,5 @@ def report():
 
     return "Reporte recibido", 200
 
-@app.route('/static/uploads/<filename>')
-def uploaded_file(filename):
-    return send_from_directory(UPLOAD_FOLDER, filename)
-
-# 👇 Esta parte es crucial para que Render detecte que tu app está activa 👇
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 10000))
-    app.run(host='0.0.0.0', port=port)
+    app.run(host="0.0.0.0", port=10000)
