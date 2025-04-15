@@ -10,7 +10,6 @@ app.secret_key = "supersecretkey"
 UPLOAD_FOLDER = 'static/uploads'
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
-# Ruta protegida por login
 @app.route('/')
 def index():
     if not session.get("logged_in"):
@@ -23,7 +22,6 @@ def index():
     with open("reportes.json", "r") as f:
         data = json.load(f)
 
-    # Parsear los campos del JSON para que no salgan None
     reports = []
     for idx, r in enumerate(data):
         reports.append([
@@ -93,4 +91,4 @@ def logout():
     return redirect(url_for("login"))
 
 if __name__ == '__main__':
-    app.run(host="0.0.0.0", port=10000)
+    app.run(host="0.0.0.0", port=10000, debug=True)
