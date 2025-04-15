@@ -37,17 +37,30 @@ def index():
 
 @app.route('/report', methods=['POST'])
 def report():
+    # Agregamos prints para depuración
+    print("---- NUEVO REPORTE ----")
+    print("request.form:", request.form)
+    print("request.files:", request.files)
+
     ip = request.form.get('ip')
     username = request.form.get('username')
     system_info = request.form.get('system_info')
     image = request.files.get('image')
     timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
+    # Más prints para verificar lo que llega
+    print("IP:", ip)
+    print("Username:", username)
+    print("System Info:", system_info)
+
     image_filename = None
     if image:
         image_filename = f"{int(time.time())}.jpg"
         image_path = os.path.join(UPLOAD_FOLDER, image_filename)
         image.save(image_path)
+        print(f"[+] Imagen guardada en {image_path}")
+    else:
+        print("[!] No se recibió imagen.")
 
     if not os.path.exists("reportes.json"):
         with open("reportes.json", "w") as f:
