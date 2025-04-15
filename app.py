@@ -1,61 +1,51 @@
-from flask import Flask, render_template, request, redirect, url_for, session, send_from_directory
+from flask import Flask, request, render_template, redirect, url_for, session, send_from_directory
 from datetime import datetime
-import json
 import os
+import json
 import time
 
 app = Flask(__name__)
-app.secret_key = 'clave_secreta'
+app.secret_key = "supersecreta"
 
 UPLOAD_FOLDER = 'static/uploads'
 if not os.path.exists(UPLOAD_FOLDER):
     os.makedirs(UPLOAD_FOLDER)
 
-# Credenciales
-USUARIO = "admin"
-CONTRASENA = "1234"
-
-@app.route("/login", methods=["GET", "POST"])
-def login():
-    if request.method == "POST":
-        username = request.form.get("username")
-        password = request.form.get("password")
-        if username == USUARIO and password == CONTRASENA:
-            session["autenticado"] = True
-            return redirect(url_for("index"))
-        else:
-            return "Credenciales inválidas", 401
-    return render_template("login.html")
-
-@app.route("/logout")
-def logout():
-    session.pop("autenticado", None)
-    return redirect(url_for("login"))
-
-@app.route("/")
-def index():
-    if not session.get("autenticado"):
-        return redirect(url_for("login"))
-
-    if not os.path.exists("reportes.json"):
-        with open("reportes.json", "w") as f:
-            json.dump([], f)
-
-    with open("reportes.json", "r") as f:
-        data = json.load(f)
+@app.route('/')
+def home():
+    if not session.get("logged_in"):
+        return redirect(url_for('login'))
+    try:
+        with open("reportes.json", "r") as f:
+            data = json.load(f)
+    except:
+        data = []
 
     reports = []
-    for i, reporte in enumerate(data):
+    for idx, r in enumerate(data, start=1):
         reports.append([
-            i + 1,
-            reporte.get("ip"),
-            reporte.get("username"),
-            reporte.get("system_info"),
-            reporte.get("timestamp"),
-            reporte.get("image")
+            idx,
+            r.get("ip"),
+            r.get("username"),
+            r.get("system_info"),
+            r.get("timestamp"),
+            r.get("image")
         ])
+    return render_template("panel.html", reports=reports)
 
-    return render_template("index.html", reports=reports)
+@app.route('/login', methods=["GET", "POST"])
+def login():
+    if request.method == "POST":
+        if request.form["username"] == "admin" and request.form["password"] == "1234":
+            session["logged_in"] = True
+            return redirect(url_for("home"))
+        return "Credenciales incorrectas", 401
+    return render_template("login.html")
+
+@app.route('/logout')
+def logout():
+    session.pop("logged_in", None)
+    return redirect(url_for("login"))
 
 @app.route('/uploads/<filename>')
 def uploaded_file(filename):
@@ -83,12 +73,11 @@ def report():
         "image": image_filename
     }
 
-    if not os.path.exists("reportes.json"):
-        with open("reportes.json", "w") as f:
-            json.dump([], f)
-
-    with open("reportes.json", "r") as f:
-        data = json.load(f)
+    if os.path.exists("reportes.json"):
+        with open("reportes.json", "r") as f:
+            data = json.load(f)
+    else:
+        data = []
 
     data.insert(0, report_data)
 
@@ -98,4 +87,4 @@ def report():
     return "Reporte recibido", 200
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=10000)
+    app.run(host='0.0.0.0', port=10000)
