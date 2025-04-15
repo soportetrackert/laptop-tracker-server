@@ -80,7 +80,7 @@ def login():
     if request.method == "POST":
         user = request.form.get("username")
         pw = request.form.get("password")
-        if user == "admin" and pw == "admin":
+        if user == "admin" and pw == "admin123":
             session["logged_in"] = True
             return redirect(url_for("index"))
         else:
