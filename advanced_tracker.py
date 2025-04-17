@@ -1,57 +1,74 @@
 import os
-import time
-import platform
-import socket
-import getpass
-import threading
-import requests
-from datetime import datetime
-from PIL import ImageGrab
 import cv2
+import time
+import json
+import socket
+import psutil
+import pyautogui
+import getpass
+import platform
+import requests
+import threading
+from datetime import datetime
 
 SERVER_URL = "https://laptop-tracker-server.onrender.com/report"
 INTERVALO_MINUTOS = 15
-
-
-def recolectar_info():
-    try:
-        ip = requests.get('https://api.ipify.org').text
-    except:
-        ip = "No disponible"
-
-    username = getpass.getuser()
-    system_info = f"{platform.system()} {platform.release()} | {platform.version()}"
-    return {
-        "ip": ip,
-        "username": username,
-        "system_info": system_info
-    }
-
 
 def capturar_webcam():
     try:
         cam = cv2.VideoCapture(0)
         result, image = cam.read()
+        cam.release()
         if result:
             filename = "webcam.jpg"
             cv2.imwrite(filename, image)
-            cam.release()
             return filename
-        cam.release()
-    except:
-        pass
+    except Exception as e:
+        print(f"[!] Error al capturar webcam: {e}")
     return None
-
 
 def capturar_pantalla():
     try:
-        imagen = ImageGrab.grab()
+        screenshot = pyautogui.screenshot()
         filename = "screenshot.jpg"
-        imagen.save(filename)
+        screenshot.save(filename)
         return filename
-    except:
-        return None
+    except Exception as e:
+        print(f"[!] Error al capturar pantalla: {e}")
+    return None
 
+def obtener_ip_publica():
+    try:
+        return requests.get("https://api.ipify.org").text
+    except:
+        return "Desconocida"
+
+def obtener_geolocalizacion(ip):
+    try:
+        res = requests.get(f"https://ipinfo.io/{ip}/json")
+        data = res.json()
+        return {
+            "ciudad": data.get("city"),
+            "region": data.get("region"),
+            "pais": data.get("country"),
+            "loc": data.get("loc")
+        }
+    except:
+        return {}
+
+def recolectar_info():
+    ip = obtener_ip_publica()
+    info = {
+        "ip": ip,
+        "username": getpass.getuser(),
+        "system_info": f"{platform.system()} {platform.release()} ({platform.version()})",
+        "hostname": socket.gethostname(),
+        "hora": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    }
+    info.update(obtener_geolocalizacion(ip))
+    print("[*] Datos recopilados para envío:")
+    print(json.dumps(info, indent=2))
+    return info
 
 def enviar_al_servidor(info, archivos):
     try:
@@ -62,16 +79,12 @@ def enviar_al_servidor(info, archivos):
                 "username": info["username"],
                 "system_info": info["system_info"]
             }
-            print("=== DATOS ENVIADOS AL SERVIDOR ===")
-            print("IP:", data["ip"])
-            print("Usuario:", data["username"])
-            print("Sistema:", data["system_info"])
-            print("Archivo imagen:", archivos["webcam"])
+            print("[*] Enviando al servidor...")
+            print("  Payload:", data)
             response = requests.post(SERVER_URL, data=data, files=files)
-            print("[+] Respuesta:", response.status_code, response.text)
+            print(f"[+] Respuesta del servidor: {response.status_code} {response.text}")
     except Exception as e:
         print(f"[!] Error al enviar al servidor: {e}")
-
 
 def ejecutar_rastreador():
     while True:
@@ -85,7 +98,6 @@ def ejecutar_rastreador():
         else:
             print("[!] No se capturó webcam.")
         time.sleep(INTERVALO_MINUTOS * 60)
-
 
 if __name__ == "__main__":
     t = threading.Thread(target=ejecutar_rastreador)
