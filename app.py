@@ -6,7 +6,6 @@ import time
 
 app = Flask(__name__)
 app.secret_key = "supersecretkey"
-
 UPLOAD_FOLDER = 'static/uploads'
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
@@ -32,7 +31,6 @@ def index():
             r.get("timestamp", "Sin dato"),
             r.get("image", None)
         ])
-
     return render_template("index.html", reports=reports)
 
 @app.route('/report', methods=['POST'])
@@ -43,22 +41,25 @@ def report():
     image = request.files.get('image')
     timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
+    print(f"[📥] Reporte recibido:")
+    print(f"  IP: {ip}")
+    print(f"  Usuario: {username}")
+    print(f"  Sistema: {system_info}")
+    print(f"  Imagen: {'Sí' if image else 'No'}")
+
     image_filename = None
     if image:
         image_filename = f"{int(time.time())}.jpg"
         image_path = os.path.join(UPLOAD_FOLDER, image_filename)
         image.save(image_path)
 
-    # Si no existe el archivo 'reportes.json', lo creamos
     if not os.path.exists("reportes.json"):
         with open("reportes.json", "w") as f:
             json.dump([], f)
 
-    # Cargar los datos existentes en el archivo 'reportes.json'
     with open("reportes.json", "r") as f:
         data = json.load(f)
 
-    # Insertar nuevo reporte en el inicio de la lista
     data.insert(0, {
         "ip": ip,
         "username": username,
@@ -67,11 +68,10 @@ def report():
         "image": image_filename
     })
 
-    # Guardar los datos actualizados de nuevo en 'reportes.json'
     with open("reportes.json", "w") as f:
         json.dump(data, f, indent=2)
 
-    return "Reporte recibido", 200
+    return "Reporte recibido correctamente", 200
 
 @app.route("/uploads/<filename>")
 def uploaded_file(filename):
