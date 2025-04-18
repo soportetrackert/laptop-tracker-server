@@ -37,47 +37,52 @@ def index():
 
 @app.route('/report', methods=['POST'])
 def report():
-    print("[*] Solicitud recibida en /report")
+    try:
+        ip = request.form.get('ip') or 'Desconocido'
+        username = request.form.get('username') or 'Desconocido'
+        system_info = request.form.get('system_info') or 'Desconocido'
+        timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        image = request.files.get('image')
+        
+        print("[+] Reporte recibido:")
+        print("  IP:", ip)
+        print("  Usuario:", username)
+        print("  Sistema:", system_info)
 
-    ip = request.form.get('ip')
-    username = request.form.get('username')
-    system_info = request.form.get('system_info')
-    image = request.files.get('image')
-    timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        image_filename = None
+        if image:
+            image_filename = f"{int(time.time())}.jpg"
+            image_path = os.path.join(UPLOAD_FOLDER, image_filename)
+            image.save(image_path)
+        else:
+            print("[!] No se recibió imagen")
 
-    print(f"  IP: {ip}")
-    print(f"  Usuario: {username}")
-    print(f"  Sistema: {system_info}")
-    print(f"  Imagen: {'Sí' if image else 'No'}")
+        if not os.path.exists("reportes.json"):
+            with open("reportes.json", "w") as f:
+                json.dump([], f)
 
-    image_filename = None
-    if image:
-        image_filename = f"{int(time.time())}.jpg"
-        image_path = os.path.join(UPLOAD_FOLDER, image_filename)
-        image.save(image_path)
+        with open("reportes.json", "r") as f:
+            try:
+                data = json.load(f)
+            except json.JSONDecodeError:
+                print("[!] Error al leer JSON. Se creará una lista vacía.")
+                data = []
 
-    if not os.path.exists("reportes.json"):
+        data.insert(0, {
+            "ip": ip,
+            "username": username,
+            "system_info": system_info,
+            "timestamp": timestamp,
+            "image": image_filename
+        })
+
         with open("reportes.json", "w") as f:
-            json.dump([], f)
+            json.dump(data, f, indent=2)
 
-    with open("reportes.json", "r") as f:
-        try:
-            data = json.load(f)
-        except json.JSONDecodeError:
-            data = []
-
-    data.insert(0, {
-        "ip": ip or "No recibido",
-        "username": username or "No recibido",
-        "system_info": system_info or "No recibido",
-        "timestamp": timestamp,
-        "image": image_filename
-    })
-
-    with open("reportes.json", "w") as f:
-        json.dump(data, f, indent=2)
-
-    return "Reporte recibido correctamente", 200
+        return "Reporte recibido correctamente", 200
+    except Exception as e:
+        print(f"[!] Error en /report: {e}")
+        return "Error procesando el reporte", 500
 
 @app.route("/uploads/<filename>")
 def uploaded_file(filename):
@@ -92,13 +97,4 @@ def login():
             session["logged_in"] = True
             return redirect(url_for("index"))
         else:
-            return "Credenciales incorrectas", 403
-    return render_template("login.html")
-
-@app.route('/logout')
-def logout():
-    session.clear()
-    return redirect(url_for("login"))
-
-if __name__ == '__main__':
-    app.run(host="0.0.0.0", port=10000, debug=True)
+            return
