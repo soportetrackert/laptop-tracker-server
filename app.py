@@ -6,6 +6,7 @@ import time
 
 app = Flask(__name__)
 app.secret_key = "supersecretkey"
+
 UPLOAD_FOLDER = 'static/uploads'
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
@@ -31,17 +32,19 @@ def index():
             r.get("timestamp", "Sin dato"),
             r.get("image", None)
         ])
+
     return render_template("index.html", reports=reports)
 
 @app.route('/report', methods=['POST'])
 def report():
+    print("[*] Solicitud recibida en /report")
+
     ip = request.form.get('ip')
     username = request.form.get('username')
     system_info = request.form.get('system_info')
     image = request.files.get('image')
     timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
-    print(f"[📥] Reporte recibido:")
     print(f"  IP: {ip}")
     print(f"  Usuario: {username}")
     print(f"  Sistema: {system_info}")
@@ -58,12 +61,15 @@ def report():
             json.dump([], f)
 
     with open("reportes.json", "r") as f:
-        data = json.load(f)
+        try:
+            data = json.load(f)
+        except json.JSONDecodeError:
+            data = []
 
     data.insert(0, {
-        "ip": ip,
-        "username": username,
-        "system_info": system_info,
+        "ip": ip or "No recibido",
+        "username": username or "No recibido",
+        "system_info": system_info or "No recibido",
         "timestamp": timestamp,
         "image": image_filename
     })
