@@ -1,63 +1,43 @@
-import requests
-import socket
-import platform
-import getpass
-import json
-import os
-from datetime import datetime
-from PIL import ImageGrab
-import cv2
+@app.route("/report", methods=["POST"])
+def report():
+    ip = request.form.get("ip", "No recibido")
+    username = request.form.get("username", "No recibido")
+    system_info = request.form.get("system_info", "No recibido")
+    hostname = request.form.get("hostname", "N/A")
+    ciudad = request.form.get("ciudad", "N/A")
+    region = request.form.get("region", "N/A")
+    pais = request.form.get("pais", "N/A")
+    loc = request.form.get("loc", "N/A")
+    hora = request.form.get("hora", str(datetime.now()))
 
-def obtener_ip_publica():
-    try:
-        return requests.get("https://api.ipify.org").text
-    except:
-        return "No disponible"
+    filename = None
+    image = request.files.get("image")
+    if image:
+        filename = datetime.now().strftime("%Y%m%d%H%M%S") + ".jpg"
+        image.save(os.path.join(UPLOAD_FOLDER, filename))
 
-def obtener_geo(ip):
-    try:
-        res = requests.get(f"https://ipinfo.io/{ip}/json").json()
-        return res
-    except:
-        return {}
-
-def recolectar_info():
-    ip = obtener_ip_publica()
-    geo = obtener_geo(ip)
-    return {
+    reporte = {
         "ip": ip,
-        "username": getpass.getuser(),
-        "system_info": f"{platform.system()} {platform.release()}",
-        "hostname": socket.gethostname(),
-        "ciudad": geo.get("city", "N/A"),
-        "region": geo.get("region", "N/A"),
-        "pais": geo.get("country", "N/A"),
-        "loc": geo.get("loc", "N/A"),
-        "hora": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        "username": username,
+        "system_info": system_info,
+        "hostname": hostname,
+        "ciudad": ciudad,
+        "region": region,
+        "pais": pais,
+        "loc": loc,
+        "hora": hora,
+        "imagen": filename
     }
 
-def capturar_webcam(nombre_archivo="webcam.jpg"):
-    try:
-        cam = cv2.VideoCapture(0)
-        ret, frame = cam.read()
-        if ret:
-            cv2.imwrite(nombre_archivo, frame)
-        cam.release()
-    except:
-        pass
+    # ✅ Verificar si el archivo JSON existe, si no, crearlo vacío
+    if not os.path.exists("reportes.json"):
+        with open("reportes.json", "w") as f:
+            json.dump([], f)
 
-def enviar_reporte():
-    datos = recolectar_info()
-    capturar_webcam("webcam.jpg")
+    with open("reportes.json", "r") as f:
+        datos = json.load(f)
+    datos.insert(0, reporte)
+    with open("reportes.json", "w") as f:
+        json.dump(datos, f, indent=2)
 
-    with open("webcam.jpg", "rb") as img:
-        files = {"image": img}
-        response = requests.post(
-            "https://laptop-tracker-server.onrender.com/report",  # Cambia por tu URL si es diferente
-            data=datos,
-            files=files
-        )
-    print("Respuesta del servidor:", response.status_code, response.text)
-
-if __name__ == "__main__":
-    enviar_reporte()
+    return "Reporte recibido"
