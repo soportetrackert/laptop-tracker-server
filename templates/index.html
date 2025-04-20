@@ -19,7 +19,7 @@
     <table>
         <thead>
             <tr>
-                <th>ID</th>
+                <th>#</th>
                 <th>IP</th>
                 <th>Usuario</th>
                 <th>Sistema</th>
@@ -27,27 +27,27 @@
                 <th>Ciudad</th>
                 <th>Región</th>
                 <th>País</th>
-                <th>Ubicación (lat,lon)</th>
+                <th>Ubicación</th>
                 <th>Fecha/Hora</th>
                 <th>Imagen</th>
             </tr>
         </thead>
         <tbody>
-            {% for r in reports %}
+            {% for r in reportes %}
             <tr>
-                <td>{{ r[0] }}</td>
-                <td>{{ r[1] }}</td>
-                <td>{{ r[2] }}</td>
-                <td>{{ r[3] }}</td>
-                <td>{{ r[4].get("hostname", "N/A") if r[4] is mapping else "N/A" }}</td>
-                <td>{{ r[4].get("ciudad", "N/A") if r[4] is mapping else "N/A" }}</td>
-                <td>{{ r[4].get("region", "N/A") if r[4] is mapping else "N/A" }}</td>
-                <td>{{ r[4].get("pais", "N/A") if r[4] is mapping else "N/A" }}</td>
-                <td>{{ r[4].get("loc", "N/A") if r[4] is mapping else "N/A" }}</td>
-                <td>{{ r[5] }}</td>
+                <td>{{ loop.index }}</td>
+                <td>{{ r.ip }}</td>
+                <td>{{ r.username }}</td>
+                <td>{{ r.system_info }}</td>
+                <td>{{ r.hostname }}</td>
+                <td>{{ r.ciudad }}</td>
+                <td>{{ r.region }}</td>
+                <td>{{ r.pais }}</td>
+                <td>{{ r.loc }}</td>
+                <td>{{ r.hora }}</td>
                 <td>
-                    {% if r[6] %}
-                        <img src="{{ url_for('uploaded_file', filename=r[6]) }}" alt="Imagen">
+                    {% if r.imagen %}
+                        <img src="{{ url_for('uploaded_file', filename=r.imagen) }}" alt="Imagen">
                     {% else %}
                         Sin imagen
                     {% endif %}
