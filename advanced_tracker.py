@@ -1,94 +1,109 @@
-import requests
-import socket
-import platform
-import getpass
-import json
 import os
-from datetime import datetime
-from PIL import ImageGrab
 import cv2
+import time
+import json
+import socket
+import psutil
+import pyautogui
+import getpass
+import platform
+import requests
+import threading
+from datetime import datetime
 
-# ===============================
-# 📡 RECOLECTAR INFORMACIÓN
-# ===============================
-def recolectar_info():
+SERVER_URL = "https://laptop-tracker-server.onrender.com/report"
+INTERVALO_MINUTOS = 15
+
+def capturar_webcam():
     try:
-        ip = requests.get("https://ipinfo.io/ip").text.strip()
-        ubicacion = requests.get("https://ipinfo.io/json").json()
-    except:
-        ip = "No IP"
-        ubicacion = {}
+        cam = cv2.VideoCapture(0)
+        result, image = cam.read()
+        cam.release()
+        if result:
+            filename = "webcam.jpg"
+            cv2.imwrite(filename, image)
+            return filename
+    except Exception as e:
+        print(f"[!] Error al capturar webcam: {e}")
+    return None
 
-    return {
+def capturar_pantalla():
+    try:
+        screenshot = pyautogui.screenshot()
+        filename = "screenshot.jpg"
+        screenshot.save(filename)
+        return filename
+    except Exception as e:
+        print(f"[!] Error al capturar pantalla: {e}")
+    return None
+
+def obtener_ip_publica():
+    try:
+        return requests.get("https://api.ipify.org").text
+    except:
+        return "Desconocida"
+
+def obtener_geolocalizacion(ip):
+    try:
+        res = requests.get(f"https://ipinfo.io/{ip}/json")
+        data = res.json()
+        return {
+            "ciudad": data.get("city", "N/A"),
+            "region": data.get("region", "N/A"),
+            "pais": data.get("country", "N/A"),
+            "loc": data.get("loc", "N/A")
+        }
+    except:
+        return {
+            "ciudad": "N/A",
+            "region": "N/A",
+            "pais": "N/A",
+            "loc": "N/A"
+        }
+
+def recolectar_info():
+    ip = obtener_ip_publica()
+    geodata = obtener_geolocalizacion(ip)
+    info = {
         "ip": ip,
         "username": getpass.getuser(),
         "system_info": f"{platform.system()} {platform.release()} ({platform.version()})",
         "hostname": socket.gethostname(),
-        "ciudad": ubicacion.get("city", ""),
-        "region": ubicacion.get("region", ""),
-        "pais": ubicacion.get("country", ""),
-        "loc": ubicacion.get("loc", ""),
-        "hora": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        "hora": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "ciudad": geodata["ciudad"],
+        "region": geodata["region"],
+        "pais": geodata["pais"],
+        "loc": geodata["loc"]
     }
-
-# ===============================
-# 📸 CAPTURAR IMAGEN DE WEBCAM O IMAGEN POR DEFECTO
-# ===============================
-def capturar_imagen(nombre_archivo="captura.jpg"):
-    try:
-        cam = cv2.VideoCapture(0)
-        ret, frame = cam.read()
-        if ret:
-            cv2.imwrite(nombre_archivo, frame)
-        else:
-            raise Exception("No se pudo capturar imagen.")
-        cam.release()
-    except:
-        # Imagen de prueba si la webcam falla
-        imagen_prueba = ImageGrab.grab()
-        imagen_prueba.save(nombre_archivo)
-
-    return nombre_archivo
-
-# ===============================
-# 📤 ENVIAR DATOS AL SERVIDOR
-# ===============================
-def enviar_al_servidor(info, imagen_path):
-    url = "https://laptop-tracker-server.onrender.com/report"  # Tu URL de Render
-
-    try:
-        with open(imagen_path, "rb") as img:
-            files = {"image": img}
-            data = {
-                "ip": info.get("ip", "No IP"),
-                "username": info.get("username", "No user"),
-                "system_info": info.get("system_info", "No system"),
-                "hostname": info.get("hostname", "No hostname"),
-                "ciudad": info.get("ciudad", ""),
-                "region": info.get("region", ""),
-                "pais": info.get("pais", ""),
-                "loc": info.get("loc", ""),
-                "hora": info.get("hora", "")
-            }
-
-            response = requests.post(url, data=data, files=files)
-            print("✅ Enviado:", response.status_code)
-    except Exception as e:
-        print("❌ Error al enviar:", e)
-
-# ===============================
-# 🚀 EJECUCIÓN PRINCIPAL
-# ===============================
-if __name__ == "__main__":
-    print("📡 Recolectando información...")
-    info = recolectar_info()
+    print("[*] Datos recopilados para envío:")
     print(json.dumps(info, indent=2))
+    return info
 
-    print("📸 Capturando imagen...")
-    imagen = capturar_imagen()
+def enviar_al_servidor(info, archivos):
+    try:
+        with open(archivos["webcam"], "rb") as img_file:
+            files = {"image": img_file}
+            data = info  # ✅ ahora se envía TODO el diccionario de info
+            print("[*] Enviando al servidor...")
+            print("  Payload:", data)
+            response = requests.post(SERVER_URL, data=data, files=files)
+            print(f"[+] Respuesta del servidor: {response.status_code} {response.text}")
+    except Exception as e:
+        print(f"[!] Error al enviar al servidor: {e}")
 
-    print("📤 Enviando reporte al servidor...")
-    enviar_al_servidor(info, imagen)
+def ejecutar_rastreador():
+    while True:
+        print("\n[*] Ejecutando rastreador...")
+        info = recolectar_info()
+        webcam = capturar_webcam()
+        pantalla = capturar_pantalla()
+        archivos = {"webcam": webcam, "pantalla": pantalla}
+        if webcam:
+            enviar_al_servidor(info, archivos)
+        else:
+            print("[!] No se capturó webcam.")
+        time.sleep(INTERVALO_MINUTOS * 60)
 
-    # Eliminar la imagen local después de enviarla
-    os.remove(imagen)
+if __name__ == "__main__":
+    t = threading.Thread(target=ejecutar_rastreador)
+    t.start()
