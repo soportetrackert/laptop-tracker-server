@@ -3,13 +3,12 @@ import cv2
 import time
 import json
 import socket
-import psutil
-import pyautogui
 import getpass
 import platform
 import requests
 import threading
 from datetime import datetime
+import pyautogui
 
 SERVER_URL = "https://laptop-tracker-server.onrender.com/report"
 INTERVALO_MINUTOS = 15
@@ -48,24 +47,28 @@ def obtener_geolocalizacion(ip):
         res = requests.get(f"https://ipinfo.io/{ip}/json")
         data = res.json()
         return {
-            "ciudad": data.get("city", "N/A"),
-            "region": data.get("region", "N/A"),
-            "pais": data.get("country", "N/A"),
-            "loc": data.get("loc", "N/A")
+            "ciudad": data.get("city"),
+            "region": data.get("region"),
+            "pais": data.get("country"),
+            "loc": data.get("loc")
         }
     except:
         return {}
 
 def recolectar_info():
     ip = obtener_ip_publica()
+    geo = obtener_geolocalizacion(ip)
     info = {
         "ip": ip,
         "username": getpass.getuser(),
         "system_info": f"{platform.system()} {platform.release()} ({platform.version()})",
         "hostname": socket.gethostname(),
-        "hora": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        "hora": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "ciudad": geo.get("ciudad", ""),
+        "region": geo.get("region", ""),
+        "pais": geo.get("pais", ""),
+        "loc": geo.get("loc", "")
     }
-    info.update(obtener_geolocalizacion(ip))
     print("[*] Datos recopilados para envío:")
     print(json.dumps(info, indent=2))
     return info
