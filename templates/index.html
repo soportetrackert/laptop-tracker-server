@@ -2,78 +2,35 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>📊 Reportes Recibidos</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            padding: 20px;
-        }
-        table {
-            border-collapse: collapse;
-            width: 100%;
-        }
-        th, td {
-            padding: 8px 10px;
-            border: 1px solid #ccc;
-            text-align: center;
-        }
-        th {
-            background-color: #f2f2f2;
-        }
-        img.thumbnail {
-            width: 80px;
-            height: auto;
-            border-radius: 6px;
-        }
-        h1 {
-            text-align: center;
-        }
-    </style>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reporte de Laptops</title>
 </head>
 <body>
-    <h1>📊 Reportes Recibidos</h1>
-
-    {% if reports %}
-        <table>
+    <h1>Reportes de Laptops</h1>
+    <table border="1">
+        <thead>
             <tr>
-                <th>#</th>
-                <th>IP</th>
+                <th>Hostname</th>
                 <th>Usuario</th>
                 <th>Sistema</th>
-                <th>Hostname</th>
-                <th>Ciudad</th>
-                <th>Región</th>
-                <th>País</th>
-                <th>Ubicación</th>
-                <th>Fecha/Hora</th>
-                <th>Imagen</th>
+                <th>IP</th>
             </tr>
+        </thead>
+        <tbody>
             {% for r in reports %}
-            <tr>
-                <td>{{ r[0] }}</td>
-                <td>{{ r[1] }}</td>
-                <td>{{ r[2] }}</td>
-                <td>{{ r[3] }}</td>
-                <td>{{ r[4].hostname }}</td>
-                <td>{{ r[4].ciudad }}</td>
-                <td>{{ r[4].region }}</td>
-                <td>{{ r[4].pais }}</td>
-                <td>{{ r[4].loc }}</td>
-                <td>{{ r[5] }}</td>
-                <td>
-                    {% if r[6] %}
-                        <a href="{{ url_for('uploaded_file', filename=r[6]) }}" target="_blank">
-                            <img src="{{ url_for('uploaded_file', filename=r[6]) }}" class="thumbnail" alt="imagen">
-                        </a>
-                    {% else %}
-                        Sin imagen
-                    {% endif %}
-                </td>
-            </tr>
+                <tr>
+                    <!-- Accede al valor de 'hostname' en cada diccionario -->
+                    <td>{{ r['hostname'] }}</td>
+                    <td>{{ r['usuario'] }}</td>
+                    <td>{{ r['sistema'] }}</td>
+                    <td>{{ r['ip'] }}</td>
+                </tr>
+            {% else %}
+                <tr>
+                    <td colspan="4">No se encontraron reportes</td>
+                </tr>
             {% endfor %}
-        </table>
-    {% else %}
-        <p>No hay reportes aún.</p>
-    {% endif %}
+        </tbody>
+    </table>
 </body>
 </html>
