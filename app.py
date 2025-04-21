@@ -1,37 +1,35 @@
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, request, render_template
+import os
+from datetime import datetime
 
 app = Flask(__name__)
 
-# Datos de ejemplo, los puedes reemplazar con los datos reales
-datos = [
-    {'hostname': 'Laptop1', 'usuario': 'franklin', 'sistema': 'Windows', 'ip': '192.168.1.1'},
-    {'hostname': 'Laptop2', 'usuario': 'user2', 'sistema': 'MacOS', 'ip': '192.168.1.2'}
-]
+# Lista global para almacenar los reportes recibidos
+reportes = []
 
-@app.route('/')
+@app.route('/', methods=['GET'])
 def index():
-    # Imprime los datos para depuración
-    print("Datos recibidos:", datos)
+    return render_template("index.html", reports=reportes)
 
-    # Si 'datos' es una lista de diccionarios, verifica si cada diccionario tiene 'hostname'
-    for r in datos:
-        if 'hostname' not in r:
-            print("Falta 'hostname' en uno de los reportes:", r)
-
-    # Pasa los datos a la plantilla
-    return render_template("index.html", reports=datos)
-
-# Ruta para manejar los reportes recibidos desde el cliente
 @app.route('/report', methods=['POST'])
 def report():
-    # Recibe los datos enviados desde el cliente
-    reporte = request.json
+    data = request.form.to_dict()
+
+    # Extraer campos esperados del formulario
+    reporte = {
+        'hostname': data.get('hostname', 'No recibido'),
+        'usuario': data.get('usuario', 'No recibido'),
+        'sistema': data.get('sistema', 'No recibido'),
+        'ip': data.get('ip', 'No recibido'),
+        'hora': data.get('hora', datetime.now().strftime("%Y-%m-%d %H:%M:%S")),
+    }
+
+    # Agrega el nuevo reporte a la lista
+    reportes.insert(0, reporte)
     print("Reporte recibido:", reporte)
 
-    # Aquí puedes agregar el reporte a la lista 'datos' si quieres almacenarlo
-    datos.append(reporte)
+    return "OK", 200
 
-    return jsonify({"message": "Reporte recibido con éxito"}), 200
-
-if __name__ == '__main__':
-    app.run(debug=True)
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 10000))
+    app.run(host="0.0.0.0", port=port)
