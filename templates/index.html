@@ -3,11 +3,74 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reporte de Laptops</title>
+    <title>Reportes de Laptops</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            color: #333;
+            margin: 0;
+            padding: 0;
+        }
+        header {
+            background-color: #3e4e5e;
+            color: white;
+            padding: 10px 20px;
+            text-align: center;
+        }
+        h1 {
+            margin: 0;
+        }
+        .container {
+            width: 90%;
+            max-width: 1200px;
+            margin: 20px auto;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            background-color: #fff;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background-color: #3e4e5e;
+            color: white;
+        }
+        tr:hover {
+            background-color: #f1f1f1;
+        }
+        .no-reports {
+            text-align: center;
+            font-size: 18px;
+            color: #888;
+            margin-top: 20px;
+        }
+        footer {
+            background-color: #3e4e5e;
+            color: white;
+            padding: 10px;
+            text-align: center;
+            position: fixed;
+            width: 100%;
+            bottom: 0;
+        }
+    </style>
 </head>
 <body>
-    <h1>Reportes de Laptops</h1>
-    <table border="1">
+
+<header>
+    <h1>Reporte de Laptops</h1>
+</header>
+
+<div class="container">
+    <table>
         <thead>
             <tr>
                 <th>Hostname</th>
@@ -19,18 +82,23 @@
         <tbody>
             {% for r in reports %}
                 <tr>
-                    <!-- Accede al valor de 'hostname' en cada diccionario -->
                     <td>{{ r['hostname'] }}</td>
                     <td>{{ r['usuario'] }}</td>
                     <td>{{ r['sistema'] }}</td>
                     <td>{{ r['ip'] }}</td>
                 </tr>
             {% else %}
-                <tr>
+                <tr class="no-reports">
                     <td colspan="4">No se encontraron reportes</td>
                 </tr>
             {% endfor %}
         </tbody>
     </table>
+</div>
+
+<footer>
+    <p>&copy; 2025 Laptop Tracker</p>
+</footer>
+
 </body>
 </html>
