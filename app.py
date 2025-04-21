@@ -10,35 +10,54 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 @app.route("/report", methods=["POST"])
 def report():
-    # ⚠️ Asegurarse de que se reciben todos los campos correctamente
-    campos = ["ip", "username", "system_info", "hostname", "ciudad", "region", "pais", "loc", "hora"]
-    data = {campo: request.form.get(campo, "No recibido") for campo in campos}
+    try:
+        ip = request.form.get("ip", "No recibido")
+        username = request.form.get("username", "No recibido")
+        system_info = request.form.get("system_info", "No recibido")
+        hostname = request.form.get("hostname", "N/A")
+        ciudad = request.form.get("ciudad", "N/A")
+        region = request.form.get("region", "N/A")
+        pais = request.form.get("pais", "N/A")
+        loc = request.form.get("loc", "N/A")
+        hora = request.form.get("hora", str(datetime.now()))
 
-    # Imagen
-    image = request.files.get("image")
-    filename = None
-    if image:
-        filename = datetime.now().strftime("%Y%m%d%H%M%S") + ".jpg"
-        image.save(os.path.join(UPLOAD_FOLDER, filename))
+        filename = None
+        image = request.files.get("image")
+        if image:
+            filename = datetime.now().strftime("%Y%m%d%H%M%S") + ".jpg"
+            image.save(os.path.join(UPLOAD_FOLDER, filename))
 
-    # Construir reporte
-    reporte = data
-    reporte["imagen"] = filename
+        reporte = {
+            "ip": ip,
+            "username": username,
+            "system_info": system_info,
+            "hostname": hostname,
+            "ciudad": ciudad,
+            "region": region,
+            "pais": pais,
+            "loc": loc,
+            "hora": hora,
+            "imagen": filename
+        }
 
-    print("✅ Nuevo reporte recibido:")
-    print(json.dumps(reporte, indent=2))
+        print("✅ Nuevo reporte recibido:")
+        print(json.dumps(reporte, indent=2))
 
-    if not os.path.exists("reportes.json"):
+        if not os.path.exists("reportes.json"):
+            with open("reportes.json", "w") as f:
+                json.dump([], f)
+
+        with open("reportes.json", "r") as f:
+            datos = json.load(f)
+        datos.insert(0, reporte)
         with open("reportes.json", "w") as f:
-            json.dump([], f)
+            json.dump(datos, f, indent=2)
 
-    with open("reportes.json", "r") as f:
-        datos = json.load(f)
-    datos.insert(0, reporte)
-    with open("reportes.json", "w") as f:
-        json.dump(datos, f, indent=2)
+        return "Reporte recibido"
 
-    return "Reporte recibido"
+    except Exception as e:
+        print(f"[❌] Error en /report: {e}")
+        return "Error interno del servidor", 500
 
 @app.route("/")
 def index():
@@ -48,7 +67,23 @@ def index():
     with open("reportes.json", "r") as f:
         datos = json.load(f)
 
-    return render_template("index.html", reports=datos)
+    reports = []
+    for i, r in enumerate(datos):
+        reports.append([
+            i + 1,
+            r.get("ip", "N/A"),
+            r.get("username", "N/A"),
+            r.get("system_info", "N/A"),
+            r.get("hostname", "N/A"),
+            r.get("ciudad", "N/A"),
+            r.get("region", "N/A"),
+            r.get("pais", "N/A"),
+            r.get("loc", "N/A"),
+            r.get("hora", "N/A"),
+            r.get("imagen")
+        ])
+
+    return render_template("index.html", reports=reports)
 
 @app.route("/uploads/<filename>")
 def uploaded_file(filename):
