@@ -2,22 +2,39 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Laptop Tracker - Reportes</title>
+    <title>📊 Reportes Recibidos</title>
     <style>
-        body { font-family: Arial, sans-serif; padding: 20px; background: #f9f9f9; }
-        h2 { color: #333; }
-        table { border-collapse: collapse; width: 100%; background: white; }
-        th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
-        th { background-color: #eee; }
-        img { max-width: 200px; height: auto; }
-        .logout { margin-bottom: 10px; display: inline-block; background: #c00; color: white; padding: 5px 10px; text-decoration: none; }
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+        th, td {
+            padding: 8px 10px;
+            border: 1px solid #ccc;
+            text-align: center;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        img.thumbnail {
+            width: 80px;
+            height: auto;
+            border-radius: 6px;
+        }
+        h1 {
+            text-align: center;
+        }
     </style>
 </head>
 <body>
-    <a href="/logout" class="logout">Cerrar sesión</a>
-    <h2>📊 Reportes Recibidos</h2>
-    <table>
-        <thead>
+    <h1>📊 Reportes Recibidos</h1>
+
+    {% if reports %}
+        <table>
             <tr>
                 <th>#</th>
                 <th>IP</th>
@@ -31,30 +48,32 @@
                 <th>Fecha/Hora</th>
                 <th>Imagen</th>
             </tr>
-        </thead>
-        <tbody>
-            {% for r in reportes %}
+            {% for r in reports %}
             <tr>
-                <td>{{ loop.index }}</td>
-                <td>{{ r.ip }}</td>
-                <td>{{ r.username }}</td>
-                <td>{{ r.system_info }}</td>
-                <td>{{ r.hostname }}</td>
-                <td>{{ r.ciudad }}</td>
-                <td>{{ r.region }}</td>
-                <td>{{ r.pais }}</td>
-                <td>{{ r.loc }}</td>
-                <td>{{ r.hora }}</td>
+                <td>{{ r[0] }}</td>
+                <td>{{ r[1] }}</td>
+                <td>{{ r[2] }}</td>
+                <td>{{ r[3] }}</td>
+                <td>{{ r[4].hostname }}</td>
+                <td>{{ r[4].ciudad }}</td>
+                <td>{{ r[4].region }}</td>
+                <td>{{ r[4].pais }}</td>
+                <td>{{ r[4].loc }}</td>
+                <td>{{ r[5] }}</td>
                 <td>
-                    {% if r.imagen %}
-                        <img src="{{ url_for('uploaded_file', filename=r.imagen) }}" alt="Imagen">
+                    {% if r[6] %}
+                        <a href="{{ url_for('uploaded_file', filename=r[6]) }}" target="_blank">
+                            <img src="{{ url_for('uploaded_file', filename=r[6]) }}" class="thumbnail" alt="imagen">
+                        </a>
                     {% else %}
                         Sin imagen
                     {% endif %}
                 </td>
             </tr>
             {% endfor %}
-        </tbody>
-    </table>
+        </table>
+    {% else %}
+        <p>No hay reportes aún.</p>
+    {% endif %}
 </body>
 </html>
