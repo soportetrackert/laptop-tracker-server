@@ -1,98 +1,37 @@
-from flask import Flask, request, render_template, redirect, url_for, session, send_from_directory
-from datetime import datetime
-import os, json
+from flask import Flask, render_template, request, jsonify
 
 app = Flask(__name__)
-app.secret_key = "clave-super-secreta"
 
-UPLOAD_FOLDER = "uploads"
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+# Datos de ejemplo, los puedes reemplazar con los datos reales
+datos = [
+    {'hostname': 'Laptop1', 'usuario': 'franklin', 'sistema': 'Windows', 'ip': '192.168.1.1'},
+    {'hostname': 'Laptop2', 'usuario': 'user2', 'sistema': 'MacOS', 'ip': '192.168.1.2'}
+]
 
-@app.route("/report", methods=["POST"])
-def report():
-    try:
-        ip = request.form.get("ip", "No recibido")
-        username = request.form.get("username", "No recibido")
-        system_info = request.form.get("system_info", "No recibido")
-        hostname = request.form.get("hostname", "N/A")
-        ciudad = request.form.get("ciudad", "N/A")
-        region = request.form.get("region", "N/A")
-        pais = request.form.get("pais", "N/A")
-        loc = request.form.get("loc", "N/A")
-        hora = request.form.get("hora", str(datetime.now()))
-
-        filename = None
-        image = request.files.get("image")
-        if image:
-            filename = datetime.now().strftime("%Y%m%d%H%M%S") + ".jpg"
-            image.save(os.path.join(UPLOAD_FOLDER, filename))
-
-        reporte = {
-            "ip": ip,
-            "username": username,
-            "system_info": system_info,
-            "hostname": hostname,
-            "ciudad": ciudad,
-            "region": region,
-            "pais": pais,
-            "loc": loc,
-            "hora": hora,
-            "imagen": filename
-        }
-
-        print("✅ Nuevo reporte recibido:")
-        print(json.dumps(reporte, indent=2))
-
-        if not os.path.exists("reportes.json"):
-            with open("reportes.json", "w") as f:
-                json.dump([], f)
-
-        with open("reportes.json", "r") as f:
-            datos = json.load(f)
-        datos.insert(0, reporte)
-        with open("reportes.json", "w") as f:
-            json.dump(datos, f, indent=2)
-
-        return "Reporte recibido"
-
-    except Exception as e:
-        print(f"[❌] Error en /report: {e}")
-        return "Error interno del servidor", 500
-
-@app.route("/")
+@app.route('/')
 def index():
-    if not os.path.exists("reportes.json"):
-        return "No hay reportes aún."
+    # Imprime los datos para depuración
+    print("Datos recibidos:", datos)
 
-    with open("reportes.json", "r") as f:
-        datos = json.load(f)
+    # Si 'datos' es una lista de diccionarios, verifica si cada diccionario tiene 'hostname'
+    for r in datos:
+        if 'hostname' not in r:
+            print("Falta 'hostname' en uno de los reportes:", r)
 
-    reports = []
-    for i, r in enumerate(datos):
-        reports.append([
-            i + 1,
-            r.get("ip", "N/A"),
-            r.get("username", "N/A"),
-            r.get("system_info", "N/A"),
-            r.get("hostname", "N/A"),
-            r.get("ciudad", "N/A"),
-            r.get("region", "N/A"),
-            r.get("pais", "N/A"),
-            r.get("loc", "N/A"),
-            r.get("hora", "N/A"),
-            r.get("imagen")
-        ])
+    # Pasa los datos a la plantilla
+    return render_template("index.html", reports=datos)
 
-    return render_template("index.html", reports=reports)
+# Ruta para manejar los reportes recibidos desde el cliente
+@app.route('/report', methods=['POST'])
+def report():
+    # Recibe los datos enviados desde el cliente
+    reporte = request.json
+    print("Reporte recibido:", reporte)
 
-@app.route("/uploads/<filename>")
-def uploaded_file(filename):
-    return send_from_directory(UPLOAD_FOLDER, filename)
+    # Aquí puedes agregar el reporte a la lista 'datos' si quieres almacenarlo
+    datos.append(reporte)
 
-@app.route("/logout")
-def logout():
-    session.clear()
-    return redirect(url_for("index"))
+    return jsonify({"message": "Reporte recibido con éxito"}), 200
 
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=10000)
+if __name__ == '__main__':
+    app.run(debug=True)
