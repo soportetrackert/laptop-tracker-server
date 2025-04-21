@@ -5,62 +5,115 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Reportes de Laptops</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f4f4f9;
-            color: #333;
+        /* Reset de márgenes y padding */
+        * {
             margin: 0;
             padding: 0;
+            box-sizing: border-box;
         }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f9f9f9;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        /* Estilo para el encabezado */
         header {
-            background-color: #3e4e5e;
-            color: white;
-            padding: 10px 20px;
+            background-color: #34495e;
+            color: #fff;
+            padding: 20px 0;
             text-align: center;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
-        h1 {
-            margin: 0;
+
+        header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            letter-spacing: 1px;
         }
+
+        /* Contenedor principal */
         .container {
-            width: 90%;
             max-width: 1200px;
-            margin: 20px auto;
+            margin: 30px auto;
+            padding: 20px;
         }
+
+        /* Estilo de la tabla */
         table {
             width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-            background-color: #fff;
             border-radius: 8px;
+            background-color: #fff;
+            border: 1px solid #ddd;
             overflow: hidden;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+            margin-top: 30px;
         }
+
         th, td {
-            padding: 12px;
+            padding: 15px;
             text-align: left;
+            font-size: 1rem;
+        }
+
+        th {
+            background-color: #2c3e50;
+            color: #fff;
+            font-weight: bold;
+        }
+
+        td {
+            background-color: #ecf0f1;
+            color: #333;
             border-bottom: 1px solid #ddd;
         }
-        th {
-            background-color: #3e4e5e;
-            color: white;
+
+        /* Hover effect para filas */
+        tr:hover td {
+            background-color: #f4f6f7;
         }
-        tr:hover {
-            background-color: #f1f1f1;
-        }
-        .no-reports {
+
+        /* Fila sin reportes */
+        .no-reports td {
             text-align: center;
-            font-size: 18px;
-            color: #888;
+            background-color: #fff;
+            color: #7f8c8d;
+            font-size: 1.2rem;
+            padding: 20px;
+        }
+
+        /* Estilo para los botones */
+        .btn {
+            display: inline-block;
+            background-color: #3498db;
+            color: #fff;
+            padding: 10px 20px;
+            text-decoration: none;
+            font-size: 1rem;
+            border-radius: 5px;
+            transition: background-color 0.3s ease;
             margin-top: 20px;
         }
-        footer {
-            background-color: #3e4e5e;
-            color: white;
-            padding: 10px;
-            text-align: center;
-            position: fixed;
-            width: 100%;
-            bottom: 0;
+
+        .btn:hover {
+            background-color: #2980b9;
         }
+
+        /* Pie de página */
+        footer {
+            background-color: #34495e;
+            color: #fff;
+            text-align: center;
+            padding: 15px 0;
+            margin-top: 50px;
+        }
+
+        footer p {
+            font-size: 1rem;
+        }
+
     </style>
 </head>
 <body>
@@ -94,10 +147,12 @@
             {% endfor %}
         </tbody>
     </table>
+
+    <a href="/report" class="btn">Ver más reportes</a>
 </div>
 
 <footer>
-    <p>&copy; 2025 Laptop Tracker</p>
+    <p>&copy; 2025 Laptop Tracker. Todos los derechos reservados.</p>
 </footer>
 
 </body>
