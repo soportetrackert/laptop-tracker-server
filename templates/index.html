@@ -64,22 +64,30 @@
             <th>Sistema</th>
             <th>IP</th>
             <th>Fecha</th>
+            <th>Imagen</th>
         </tr>
     </thead>
     <tbody>
         {% if reports %}
             {% for r in reports %}
             <tr>
-                <td>{{ r['hostname'] }}</td>
-                <td>{{ r['usuario'] }}</td>
-                <td>{{ r['sistema'] }}</td>
-                <td>{{ r['ip'] }}</td>
-                <td>{{ r['hora'] }}</td>
+                <td>{{ r.hostname }}</td>
+                <td>{{ r.username }}</td>
+                <td>{{ r.system }}</td>
+                <td>{{ r.ip }}</td>
+                <td>{{ r.fecha }}</td>
+                <td>
+                    {% if r.imagen %}
+                        <a href="{{ url_for('uploaded_file', filename=r.imagen) }}" target="_blank">ver</a>
+                    {% else %}
+                        Sin imagen
+                    {% endif %}
+                </td>
             </tr>
             {% endfor %}
         {% else %}
             <tr>
-                <td colspan="5" class="no-reports">No se han recibido reportes aún.</td>
+                <td colspan="6" class="no-reports">No se han recibido reportes aún.</td>
             </tr>
         {% endif %}
     </tbody>
