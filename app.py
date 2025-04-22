@@ -1,5 +1,5 @@
-from flask import Flask, render_template, send_from_directory
 import os
+from flask import Flask, render_template, send_from_directory
 
 app = Flask(__name__)
 
@@ -19,4 +19,6 @@ def index():
     return render_template('index.html', reports=reportes)
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    # Usamos la variable de entorno PORT para que Flask escuche en el puerto correcto
+    port = int(os.environ.get("PORT", 5000))  # 5000 es el valor por defecto
+    app.run(debug=True, host="0.0.0.0", port=port)
