@@ -23,14 +23,15 @@ def report():
     ip = request.form.get("ip", "No recibido")
     usuario = request.form.get("usuario", "No recibido")
     sistema = request.form.get("sistema", "No recibido")
-    imagen = request.files.get("imagen")  # <-- ESTE nombre debe coincidir con el cliente
+    imagen_file = request.files.get("imagen")
 
     filename = None
-    if imagen:
-        filename = imagen.filename
-        imagen.save(os.path.join(UPLOAD_FOLDER, filename))
+    if imagen_file:
+        filename = imagen_file.filename
+        save_path = os.path.join(UPLOAD_FOLDER, filename)
+        imagen_file.save(save_path)
 
-    reporte = {
+    nuevo_reporte = {
         "ip": ip,
         "usuario": usuario,
         "sistema": sistema,
@@ -43,7 +44,7 @@ def report():
     else:
         reportes = []
 
-    reportes.insert(0, reporte)
+    reportes.insert(0, nuevo_reporte)
 
     with open(REPORT_FILE, 'w', encoding='utf-8') as f:
         json.dump(reportes, f, ensure_ascii=False, indent=4)
