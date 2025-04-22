@@ -4,16 +4,10 @@ import socket
 import getpass
 from datetime import datetime
 import cv2
+import pyautogui
 import os
 
-# ========================
-# CONFIGURACIÓN
-# ========================
-SERVER_URL = "https://laptop-tracker-server.onrender.com/report"  # <-- tu URL real
-
-# ========================
-# FUNCIONES
-# ========================
+SERVER_URL = "https://laptop-tracker-server.onrender.com/report"  # Usa tu URL real
 
 def capturar_webcam(path='webcam.jpg'):
     try:
@@ -21,10 +15,15 @@ def capturar_webcam(path='webcam.jpg'):
         ret, frame = cam.read()
         if ret:
             cv2.imwrite(path, frame)
-        else:
-            with open(path, 'wb') as f:
-                f.write(b'')  # vacía si no se pudo
         cam.release()
+    except:
+        with open(path, 'wb') as f:
+            f.write(b'')
+
+def capturar_pantalla(path='pantalla.jpg'):
+    try:
+        screenshot = pyautogui.screenshot()
+        screenshot.save(path)
     except:
         with open(path, 'wb') as f:
             f.write(b'')
@@ -33,7 +32,10 @@ def recolectar_info():
     hostname = socket.gethostname()
     usuario = getpass.getuser()
     sistema = f"{platform.system()} {platform.release()}"
-    ip = socket.gethostbyname(hostname)
+    try:
+        ip = socket.gethostbyname(hostname)
+    except:
+        ip = "0.0.0.0"
     return {
         'ip': ip,
         'usuario': usuario,
@@ -43,9 +45,8 @@ def recolectar_info():
 def enviar_reporte():
     capturar_webcam("webcam.jpg")
     datos = recolectar_info()
-
     files = {
-        "imagen": open("webcam.jpg", "rb")  # <-- NOMBRE CAMBIADO para que coincida con el servidor
+        "imagen": open("webcam.jpg", "rb")
     }
 
     try:
@@ -54,8 +55,5 @@ def enviar_reporte():
     except Exception as e:
         print("Error al enviar reporte:", e)
 
-# ========================
-# EJECUCIÓN
-# ========================
 if __name__ == "__main__":
     enviar_reporte()
