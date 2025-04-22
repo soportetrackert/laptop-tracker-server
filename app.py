@@ -23,12 +23,12 @@ def report():
     ip = request.form.get("ip", "No recibido")
     usuario = request.form.get("usuario", "No recibido")
     sistema = request.form.get("sistema", "No recibido")
-    imagen_webcam = request.files.get("imagen_webcam")
+    imagen = request.files.get("imagen")  # <-- ESTE nombre debe coincidir con el cliente
 
     filename = None
-    if imagen_webcam:
-        filename = f"webcam_{usuario}_{ip}.jpg"
-        imagen_webcam.save(os.path.join(UPLOAD_FOLDER, filename))
+    if imagen:
+        filename = imagen.filename
+        imagen.save(os.path.join(UPLOAD_FOLDER, filename))
 
     reporte = {
         "ip": ip,
