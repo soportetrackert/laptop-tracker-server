@@ -3,21 +3,20 @@ import os
 
 app = Flask(__name__)
 
-# Ruta para mostrar la imagen
-@app.route('/ver_imagen/<filename>')
-def ver_imagen(filename):
-    # Asegúrate de que 'uploads' es la carpeta correcta donde están almacenadas tus imágenes
-    return send_from_directory(os.path.join(app.root_path, 'uploads'), filename)
+# Ruta para servir las imágenes almacenadas en 'static/uploads'
+@app.route('/uploads/<filename>')
+def uploaded_file(filename):
+    return send_from_directory(os.path.join(app.root_path, 'static/uploads'), filename)
 
-# Página principal
+# Ruta principal que muestra los reportes
 @app.route('/')
 def index():
-    # Simulando algunos reportes con imágenes para demostración
+    # Supón que 'reportes' es una lista de reportes que contiene los datos y nombres de las imágenes
     reportes = [
-        {'imagen': 'image1.jpg'},
-        {'imagen': 'image2.jpg'},
+        {"imagen": "imagen1.jpg", "ip": "192.168.0.1", "usuario": "usuario1", "sistema": "Windows 10"},
+        {"imagen": "imagen2.jpg", "ip": "192.168.0.2", "usuario": "usuario2", "sistema": "Linux"}
     ]
-    return render_template("index.html", reports=reportes)
+    return render_template('index.html', reports=reportes)
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     app.run(debug=True)
