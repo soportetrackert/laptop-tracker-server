@@ -3,50 +3,32 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reportes de Imágenes</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 40px;
-            background-color: #f4f4f4;
-        }
-        h1 {
-            text-align: center;
-            color: #333;
-        }
-        ul {
-            list-style-type: none;
-            padding: 0;
-        }
-        li {
-            background-color: #fff;
-            margin: 10px 0;
-            padding: 10px;
-            border-radius: 8px;
-            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-        }
-        a {
-            color: #007bff;
-            text-decoration: none;
-            font-weight: bold;
-        }
-        a:hover {
-            text-decoration: underline;
-        }
-    </style>
+    <title>Panel de Reportes</title>
 </head>
 <body>
-
-    <h1>Reportes de Imágenes</h1>
-
-    <ul>
-        {% for r in reports %}
-            <li>
-                <strong>Imagen:</strong> 
-                <a href="{{ url_for('ver_imagen', filename=r.imagen) }}" target="_blank">Ver</a>
-            </li>
-        {% endfor %}
-    </ul>
-
+    <h1>Reportes de Rastreo de Laptops</h1>
+    <table>
+        <thead>
+            <tr>
+                <th>IP</th>
+                <th>Usuario</th>
+                <th>Sistema</th>
+                <th>Imagen</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for r in reports %}
+                <tr>
+                    <td>{{ r.ip }}</td>
+                    <td>{{ r.usuario }}</td>
+                    <td>{{ r.sistema }}</td>
+                    <td>
+                        <!-- Aquí se utiliza la URL generada por Flask para el archivo de imagen -->
+                        <a href="{{ url_for('uploaded_file', filename=r.imagen) }}" target="_blank">Ver Imagen</a>
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
 </body>
 </html>
