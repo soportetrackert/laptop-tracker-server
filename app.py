@@ -15,7 +15,6 @@ def index():
             reportes = json.load(f)
     else:
         reportes = []
-
     return render_template('index.html', reports=reportes)
 
 @app.route('/report', methods=['POST'])
@@ -23,19 +22,18 @@ def report():
     ip = request.form.get("ip", "No recibido")
     usuario = request.form.get("usuario", "No recibido")
     sistema = request.form.get("sistema", "No recibido")
-    imagen_file = request.files.get("imagen")
+    imagen = request.files.get("imagen")  # <-- CAMPO CORRECTO
 
     filename = None
-    if imagen_file:
-        filename = imagen_file.filename
-        save_path = os.path.join(UPLOAD_FOLDER, filename)
-        imagen_file.save(save_path)
+    if imagen and imagen.filename:
+        filename = imagen.filename
+        imagen.save(os.path.join(UPLOAD_FOLDER, filename))
 
-    nuevo_reporte = {
+    reporte = {
         "ip": ip,
         "usuario": usuario,
         "sistema": sistema,
-        "imagen": filename
+        "imagen": filename if filename else "Sin Imagen"
     }
 
     if os.path.exists(REPORT_FILE):
@@ -44,7 +42,7 @@ def report():
     else:
         reportes = []
 
-    reportes.insert(0, nuevo_reporte)
+    reportes.insert(0, reporte)
 
     with open(REPORT_FILE, 'w', encoding='utf-8') as f:
         json.dump(reportes, f, ensure_ascii=False, indent=4)
