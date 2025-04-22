@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Panel de Reportes</title>
+    <title>Reportes de Rastreo de Laptops</title>
 </head>
 <body>
     <h1>Reportes de Rastreo de Laptops</h1>
-    <table>
+    <table border="1">
         <thead>
             <tr>
                 <th>IP</th>
@@ -18,15 +18,12 @@
         </thead>
         <tbody>
             {% for r in reports %}
-                <tr>
-                    <td>{{ r.ip }}</td>
-                    <td>{{ r.usuario }}</td>
-                    <td>{{ r.sistema }}</td>
-                    <td>
-                        <!-- Aquí se utiliza la URL generada por Flask para el archivo de imagen -->
-                        <a href="{{ url_for('uploaded_file', filename=r.imagen) }}" target="_blank">Ver Imagen</a>
-                    </td>
-                </tr>
+            <tr>
+                <td>{{ r.ip }}</td>
+                <td>{{ r.usuario }}</td>
+                <td>{{ r.sistema }}</td>
+                <td><a href="{{ url_for('uploaded_file', filename=r.imagen) }}" target="_blank">Ver Imagen</a></td>
+            </tr>
             {% endfor %}
         </tbody>
     </table>
