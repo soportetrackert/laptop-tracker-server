@@ -1,12 +1,16 @@
 from flask import Flask, request, render_template, send_from_directory
+from werkzeug.utils import secure_filename
 import os
 from datetime import datetime
-from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
+
+# Carpeta para guardar imágenes
 UPLOAD_FOLDER = "static/uploads"
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 
+# Lista en memoria para almacenar reportes
 reportes = []
 
 @app.route("/", methods=["GET"])
@@ -14,48 +18,44 @@ def index():
     return render_template("index.html", reports=reportes)
 
 @app.route("/report", methods=["POST"])
-def report():
-    print("[INFO] Reporte recibido.")
-
+def recibir_reporte():
     try:
-        ip = request.form.get("ip") or "No recibido"
-        username = request.form.get("usuario") or "No recibido"
-        system = request.form.get("sistema") or "No recibido"
-        hostname = request.form.get("hostname") or "No recibido"
-        fecha = request.form.get("hora") or datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        data = request.form
+        archivo = request.files.get("imagen")
 
-        imagen = request.files.get("imagen")
-        filename = None
+        hostname = data.get("hostname", "No recibido")
+        usuario = data.get("usuario", "No recibido")
+        sistema = data.get("sistema", "No recibido")
+        ip = data.get("ip", "No recibido")
+        hora = data.get("hora", datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
 
-        if imagen:
-            timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
-            filename = secure_filename(f"{hostname}_{timestamp}.jpg")
-            path = os.path.join(UPLOAD_FOLDER, filename)
-            imagen.save(path)
-            print(f"[INFO] Imagen guardada: {filename}")
-        else:
-            print("[WARN] Imagen no recibida.")
+        nombre_archivo = "no_imagen.png"
+        if archivo and archivo.filename:
+            nombre_archivo = datetime.now().strftime("%Y%m%d%H%M%S_") + secure_filename(archivo.filename)
+            ruta = os.path.join(app.config["UPLOAD_FOLDER"], nombre_archivo)
+            archivo.save(ruta)
 
         reporte = {
-            "ip": ip,
-            "username": username,
-            "system": system,
             "hostname": hostname,
-            "fecha": fecha,
-            "imagen": filename
+            "usuario": usuario,
+            "sistema": sistema,
+            "ip": ip,
+            "hora": hora,
+            "imagen": nombre_archivo
         }
-
         reportes.append(reporte)
-        print(f"[INFO] Reporte almacenado: {reporte}")
+        print(f"[✅] Reporte recibido: {reporte}")
+        return "Reporte recibido correctamente", 200
 
-        return "Reporte recibido", 200
     except Exception as e:
-        print("[ERROR]", e)
-        return "Error procesando reporte", 500
+        print(f"[❌] Error al recibir reporte: {e}")
+        return "Error procesando el reporte", 500
 
 @app.route("/static/uploads/<filename>")
-def uploaded_file(filename):
-    return send_from_directory(UPLOAD_FOLDER, filename)
+def ver_imagen(filename):
+    return send_from_directory(app.config["UPLOAD_FOLDER"], filename)
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    import os
+    port = int(os.environ.get("PORT", 10000))
+    app.run(host="0.0.0.0", port=port)
