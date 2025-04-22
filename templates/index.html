@@ -4,10 +4,91 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Reportes de Rastreo de Laptops</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f6f8;
+            margin: 0;
+            padding: 20px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+        }
+
+        table {
+            width: 90%;
+            margin: auto;
+            border-collapse: collapse;
+            background-color: #fff;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+
+        th, td {
+            padding: 12px 20px;
+            text-align: center;
+            border-bottom: 1px solid #ddd;
+        }
+
+        th {
+            background-color: #2d89ef;
+            color: white;
+        }
+
+        tr:hover {
+            background-color: #f1f1f1;
+        }
+
+        a {
+            text-decoration: none;
+            color: #2d89ef;
+            font-weight: bold;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        @media screen and (max-width: 768px) {
+            table, thead, tbody, th, td, tr {
+                display: block;
+            }
+
+            th {
+                position: absolute;
+                top: -9999px;
+                left: -9999px;
+            }
+
+            td {
+                border: none;
+                position: relative;
+                padding-left: 50%;
+                text-align: left;
+            }
+
+            td:before {
+                position: absolute;
+                top: 12px;
+                left: 20px;
+                width: 45%;
+                white-space: nowrap;
+                font-weight: bold;
+            }
+
+            td:nth-of-type(1):before { content: "IP"; }
+            td:nth-of-type(2):before { content: "Usuario"; }
+            td:nth-of-type(3):before { content: "Sistema"; }
+            td:nth-of-type(4):before { content: "Imagen"; }
+        }
+    </style>
 </head>
 <body>
-    <h1>Reportes de Rastreo de Laptops</h1>
-    <table border="1">
+    <h1>📍 Reportes de Rastreo de Laptops</h1>
+
+    <table>
         <thead>
             <tr>
                 <th>IP</th>
@@ -22,7 +103,13 @@
                 <td>{{ r.ip }}</td>
                 <td>{{ r.usuario }}</td>
                 <td>{{ r.sistema }}</td>
-                <td><a href="{{ url_for('uploaded_file', filename=r.imagen) }}" target="_blank">Ver Imagen</a></td>
+                <td>
+                    {% if r.imagen %}
+                        <a href="{{ url_for('uploaded_file', filename=r.imagen) }}" target="_blank">Ver Imagen</a>
+                    {% else %}
+                        <span style="color: gray;">Sin Imagen</span>
+                    {% endif %}
+                </td>
             </tr>
             {% endfor %}
         </tbody>
