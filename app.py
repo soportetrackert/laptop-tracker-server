@@ -1,73 +1,52 @@
-import os
-import json
-from flask import Flask, request, render_template, send_from_directory
-
-app = Flask(__name__)
-UPLOAD_FOLDER = os.path.join(app.root_path, 'static/uploads')
-REPORT_FILE = os.path.join(app.root_path, 'reportes.json')
-
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-
-@app.route('/')
-def index():
-    if os.path.exists(REPORT_FILE):
-        with open(REPORT_FILE, 'r', encoding='utf-8') as f:
-            reportes = json.load(f)
-    else:
-        reportes = []
-
-    return render_template('index.html', reports=reportes)
-
 @app.route('/report', methods=['POST'])
 def report():
+    print("🔔 Se recibió un reporte")
+
+    ip = request.form.get("ip", "No recibido")
+    usuario = request.form.get("usuario", "No recibido")
+    sistema = request.form.get("sistema", "No recibido")
+    hora = request.form.get("hora", "No recibido")
+    imagen = request.files.get("imagen")
+
+    print("📥 FORM DATA:")
+    print("IP:", ip)
+    print("Usuario:", usuario)
+    print("Sistema:", sistema)
+    print("Hora:", hora)
+    print("Imagen:", imagen.filename if imagen else "No recibida")
+
+    filename = None
+    if imagen and imagen.filename:
+        filename = f"{hora.replace(':', '-')}_{imagen.filename}"
+        ruta_guardado = os.path.join(UPLOAD_FOLDER, filename)
+        print("📂 Guardando imagen en:", ruta_guardado)
+        imagen.save(ruta_guardado)
+
+    reporte = {
+        "ip": ip,
+        "usuario": usuario,
+        "sistema": sistema,
+        "hora": hora,
+        "imagen": filename if filename else None
+    }
+
+    print("💾 Registro que se va a guardar:", reporte)
+
+    # Guardar reporte en reportes.json
     try:
-        ip = request.form.get("ip", "No recibido")
-        usuario = request.form.get("usuario", "No recibido")
-        sistema = request.form.get("sistema", "No recibido")
-        hora = request.form.get("hora", "No recibido")
-        imagen = request.files.get("imagen")
-
-        print("📥 Datos recibidos:")
-        print("IP:", ip)
-        print("Usuario:", usuario)
-        print("Sistema:", sistema)
-        print("Hora:", hora)
-        print("Imagen:", imagen.filename if imagen else "No recibida")
-
-        filename = None
-        if imagen and imagen.filename:
-            safe_filename = imagen.filename.replace(" ", "_")
-            filename = f"{hora.replace(':', '-')}_{safe_filename}"
-            imagen.save(os.path.join(UPLOAD_FOLDER, filename))
-
-        nuevo_reporte = {
-            "ip": ip,
-            "usuario": usuario,
-            "sistema": sistema,
-            "imagen": filename
-        }
-
         if os.path.exists(REPORT_FILE):
             with open(REPORT_FILE, 'r', encoding='utf-8') as f:
                 reportes = json.load(f)
         else:
             reportes = []
 
-        reportes.insert(0, nuevo_reporte)
+        reportes.insert(0, reporte)
 
         with open(REPORT_FILE, 'w', encoding='utf-8') as f:
             json.dump(reportes, f, ensure_ascii=False, indent=4)
 
-        return "Reporte recibido", 200
-
+        print("✅ Reporte guardado con éxito.")
     except Exception as e:
-        print("❌ Error al procesar reporte:", e)
-        return "Error interno del servidor", 500
+        print("❌ Error guardando el reporte:", e)
 
-@app.route('/uploads/<filename>')
-def uploaded_file(filename):
-    return send_from_directory(UPLOAD_FOLDER, filename)
-
-if __name__ == '__main__':
-    port = int(os.environ.get("PORT", 5000))
-    app.run(debug=True, host='0.0.0.0', port=port)
+    return "Reporte recibido", 200
