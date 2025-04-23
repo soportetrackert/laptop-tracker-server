@@ -20,28 +20,29 @@ def index():
 
 @app.route('/report', methods=['POST'])
 def report():
-    print("📥 Recibido POST en /report")
-    print("Form data:", request.form)
-    print("Archivos:", request.files)
-
     ip = request.form.get("ip", "No recibido")
     usuario = request.form.get("usuario", "No recibido")
     sistema = request.form.get("sistema", "No recibido")
+    hora = request.form.get("hora", "No recibido")
     imagen = request.files.get("imagen")
 
+    print("📥 Datos recibidos:")
+    print("IP:", ip)
+    print("Usuario:", usuario)
+    print("Sistema:", sistema)
+    print("Hora:", hora)
+    print("Imagen:", imagen.filename if imagen else "No recibida")
+
     filename = None
-    if imagen:
-        filename = imagen.filename
+    if imagen and imagen.filename:
+        filename = f"{hora.replace(':', '-')}_{imagen.filename}"
         imagen.save(os.path.join(UPLOAD_FOLDER, filename))
-        print(f"✅ Imagen guardada como {filename}")
-    else:
-        print("⚠️ No se recibió imagen")
 
     reporte = {
         "ip": ip,
         "usuario": usuario,
         "sistema": sistema,
-        "imagen": filename
+        "imagen": filename if filename else None
     }
 
     if os.path.exists(REPORT_FILE):
