@@ -6,14 +6,7 @@ from datetime import datetime
 import cv2
 import os
 
-# ========================
-# CONFIGURACIÓN
-# ========================
-SERVER_URL = "https://laptop-tracker-server.onrender.com/report"  # Cambia si estás en local
-
-# ========================
-# FUNCIONES
-# ========================
+SERVER_URL = "https://laptop-tracker-server.onrender.com/report"
 
 def capturar_webcam(path='webcam.jpg'):
     try:
@@ -38,7 +31,6 @@ def recolectar_info():
     except:
         ip = "No obtenido"
     hora = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-
     return {
         'ip': ip,
         'usuario': usuario,
@@ -47,24 +39,18 @@ def recolectar_info():
     }
 
 def enviar_reporte():
-    # Capturar imagen de webcam
     capturar_webcam("webcam.jpg")
-
     datos = recolectar_info()
     print("📤 Enviando datos:", datos)
 
-    files = {
-        "imagen": open("webcam.jpg", "rb")
-    }
-
     try:
-        response = requests.post(SERVER_URL, data=datos, files=files)
-        print("✅ Respuesta del servidor:", response.status_code)
+        with open("webcam.jpg", "rb") as f:
+            files = {"imagen": f}
+            response = requests.post(SERVER_URL, data=datos, files=files)
+            print("✅ Respuesta del servidor:", response.status_code)
+            print("🔁 Respuesta completa:", response.text)
     except Exception as e:
         print("❌ Error al enviar reporte:", e)
 
-# ========================
-# EJECUCIÓN
-# ========================
 if __name__ == "__main__":
     enviar_reporte()
