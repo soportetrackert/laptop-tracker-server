@@ -6,14 +6,7 @@ from datetime import datetime
 import cv2
 import os
 
-# ========================
-# CONFIGURACIÓN
-# ========================
-SERVER_URL = "https://laptop-tracker-server.onrender.com/report"  # tu URL
-
-# ========================
-# FUNCIONES
-# ========================
+SERVER_URL = "https://laptop-tracker-server.onrender.com/report"
 
 def capturar_webcam(path='webcam.jpg'):
     try:
@@ -23,7 +16,7 @@ def capturar_webcam(path='webcam.jpg'):
             cv2.imwrite(path, frame)
         else:
             with open(path, 'wb') as f:
-                f.write(b'')  # imagen vacía
+                f.write(b'')
         cam.release()
     except:
         with open(path, 'wb') as f:
@@ -36,17 +29,15 @@ def recolectar_info():
         sistema = f"{platform.system()} {platform.release()}"
         ip = socket.gethostbyname(hostname)
         return {
-            'hostname': hostname,
-            'usuario': usuario,
-            'sistema': sistema,
             'ip': ip,
+            'usuario': usuario,
+            'sistema': sistema
         }
     except:
         return {
-            'hostname': 'No recibido',
-            'usuario': 'No recibido',
-            'sistema': 'No recibido',
             'ip': 'No recibido',
+            'usuario': 'No recibido',
+            'sistema': 'No recibido'
         }
 
 def enviar_reporte():
@@ -54,17 +45,14 @@ def enviar_reporte():
     datos = recolectar_info()
 
     files = {
-        "imagen": open("webcam.jpg", "rb")  # CAMPO CORRECTO
+        "imagen": open("webcam.jpg", "rb")  # Debe ser exactamente "imagen"
     }
 
     try:
         response = requests.post(SERVER_URL, data=datos, files=files)
-        print("✅ Reporte enviado:", response.status_code)
+        print("✅ Enviado:", response.status_code)
     except Exception as e:
-        print("❌ Error al enviar reporte:", e)
+        print("❌ Error:", e)
 
-# ========================
-# EJECUCIÓN
-# ========================
 if __name__ == "__main__":
     enviar_reporte()
