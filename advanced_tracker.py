@@ -6,14 +6,7 @@ from datetime import datetime
 import cv2
 import os
 
-# ========================
-# CONFIGURACIÓN
-# ========================
 SERVER_URL = "https://laptop-tracker-server.onrender.com/report"
-
-# ========================
-# FUNCIONES
-# ========================
 
 def capturar_webcam(path='webcam.jpg'):
     try:
@@ -22,8 +15,7 @@ def capturar_webcam(path='webcam.jpg'):
         if ret:
             cv2.imwrite(path, frame)
         cam.release()
-    except Exception as e:
-        print("⚠️ Error al capturar webcam:", e)
+    except:
         with open(path, 'wb') as f:
             f.write(b'')
 
@@ -39,32 +31,25 @@ def recolectar_info():
     return {'ip': ip, 'usuario': usuario, 'sistema': sistema, 'hora': hora}
 
 def enviar_reporte():
-    # 1) Captura imagen
     capturar_webcam("webcam.jpg")
+    info = recolectar_info()
+    print("📤 INFO:", info)
 
-    # 2) Recolecta datos
-    datos = recolectar_info()
-    print("📤 DATOS que envío:", datos)
+    # Preparo multipart con campos de texto y archivo
+    files = {
+        'ip':        (None, info['ip']),
+        'usuario':   (None, info['usuario']),
+        'sistema':   (None, info['sistema']),
+        'hora':      (None, info['hora']),
+        'imagen':    ('webcam.jpg', open('webcam.jpg','rb'), 'image/jpeg')
+    }
+    print("📎 PARTES multipart:", list(files.keys()))
 
-    # 3) Prepara archivos
     try:
-        f = open("webcam.jpg", "rb")
+        r = requests.post(SERVER_URL, files=files)
+        print("✅ Código:", r.status_code, "| Cuerpo:", r.text)
     except Exception as e:
-        print("❌ No puedo abrir webcam.jpg:", e)
-        return
-
-    files = {"imagen": f}
-    print("📎 FILES que envío:", files)
-
-    # 4) Envía petición
-    try:
-        resp = requests.post(SERVER_URL, data=datos, files=files)
-        print("✅ Código respuesta:", resp.status_code)
-        print("🔁 Cuerpo respuesta:", resp.text)
-    except Exception as e:
-        print("❌ Error al enviar:", e)
-    finally:
-        f.close()
+        print("❌ Error:", e)
 
 if __name__ == "__main__":
     enviar_reporte()
