@@ -1,7 +1,6 @@
-# advanced_tracker.py corregido y verificado
+# advanced_tracker.py (versión final corregida)
 import requests
 import platform
-import socket
 import getpass
 from datetime import datetime
 import cv2
@@ -9,18 +8,26 @@ import cv2
 SERVER_URL = 'https://laptop-tracker-server.onrender.com/report'
 
 def capturar_webcam(path='webcam.jpg'):
-    cam = cv2.VideoCapture(0)
-    ret, frame = cam.read()
-    if ret:
-        cv2.imwrite(path, frame)
-    else:
-        print("⚠️ No se pudo capturar imagen de la webcam")
-    cam.release()
+    try:
+        cam = cv2.VideoCapture(0)
+        if not cam.isOpened():
+            raise Exception("No se pudo acceder a la webcam")
+        ret, frame = cam.read()
+        if ret:
+            cv2.imwrite(path, frame)
+            print("📸 Imagen capturada exitosamente.")
+        else:
+            print("⚠️ No se pudo capturar imagen de la webcam.")
+    except Exception as e:
+        print("❌ Error al capturar imagen:", e)
+    finally:
+        cam.release()
 
 def recolectar_info():
     try:
-        ip_publica = requests.get('https://api.ipify.org').text
-    except:
+        ip_publica = requests.get('https://api.ipify.org', timeout=5).text
+    except Exception as e:
+        print("⚠️ No se pudo obtener IP pública:", e)
         ip_publica = 'No obtenido'
     usuario = getpass.getuser()
     sistema = f"{platform.system()} {platform.release()}"
@@ -38,11 +45,11 @@ def enviar_reporte():
     print("📤 Datos recolectados:")
     for k, v in info.items():
         print(f"  {k}: {v}")
-    
+
     try:
         with open('webcam.jpg', 'rb') as img:
             files = {'imagen': img}
-            response = requests.post(SERVER_URL, data=info, files=files)
+            response = requests.post(SERVER_URL, data=info, files=files, timeout=10)
             print(f"✅ Enviado: {response.status_code} - {response.text}")
     except Exception as e:
         print("❌ Error al enviar reporte:", e)
