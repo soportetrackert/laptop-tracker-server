@@ -4,14 +4,12 @@ import json
 from flask import Flask, request, render_template, send_from_directory, jsonify
 
 app = Flask(__name__)
-# Configuración de rutas
-UPLOAD_FOLDER = os.path.join(app.root_path, 'static', 'uploads')
+# Configuración de rutas\UPLOAD_FOLDER = os.path.join(app.root_path, 'static', 'uploads')
 REPORT_FILE = os.path.join(app.root_path, 'reportes.json')
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 @app.route('/debug_reportes')
 def debug_reportes():
-    # Devuelve el JSON crudo de reportes.json
     if os.path.exists(REPORT_FILE):
         with open(REPORT_FILE, 'r', encoding='utf-8') as f:
             data = f.read()
@@ -33,38 +31,27 @@ def report():
     print('📥 FORM DATA:', request.form)
     print('📥 FILES   :', request.files)
 
-    # Primero intentamos leer JSON en campo 'info'
-    info = request.form.get('info')
-    if info:
-        js = json.loads(info)
-        # IP puede venir en 'ip' o en 'ip_publica'
-        ip = js.get('ip') or js.get('ip_publica') or 'No recibido'
-        usuario = js.get('usuario', 'No recibido')
-        sistema = js.get('sistema', 'No recibido')
-        hora = js.get('hora', 'No recibido')
-    else:
-        # Si no viene JSON, leemos campos sueltos
-        ip = request.form.get('ip', 'No recibido')
-        usuario = request.form.get('usuario', 'No recibido')
-        sistema = request.form.get('sistema', 'No recibido')
-        hora = request.form.get('hora', 'No recibido')
+    # Leer campos del form-data
+    ip = request.form.get('ip', 'No recibido')
+    usuario = request.form.get('usuario', 'No recibido')
+    sistema = request.form.get('sistema', 'No recibido')
+    hora = request.form.get('hora', 'No recibido')
 
-    # Acepta imagen del campo 'imagen' o 'imagen_webcam'
-    imagen = request.files.get('imagen') or request.files.get('imagen_webcam')
+    # Acepta imagen en campo 'imagen'
+    imagen = request.files.get('imagen')
     filename = None
     if imagen and imagen.filename:
         safe_name = f"{hora.replace(':','-')}_{imagen.filename.replace(' ','_')}"
-        full_path = os.path.join(UPLOAD_FOLDER, safe_name)
-        imagen.save(full_path)
+        path = os.path.join(UPLOAD_FOLDER, safe_name)
+        imagen.save(path)
         filename = safe_name
-        print('✅ Imagen guardada en', full_path)
+        print('✅ Imagen guardada en', path)
     else:
         print('⚠️ No se recibió archivo de imagen')
 
     nuevo = { 'ip': ip, 'usuario': usuario, 'sistema': sistema, 'hora': hora, 'imagen': filename }
     print('💾 Reporte a guardar:', nuevo)
 
-    # Escribir en reportes.json
     reportes = []
     if os.path.exists(REPORT_FILE):
         with open(REPORT_FILE, 'r', encoding='utf-8') as f:
@@ -86,16 +73,16 @@ if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=port)
 
 
-# advanced_tracker.py (Cliente definitivo)
+# advanced_tracker.py (Cliente simplificado)
 import requests
 import platform
 import socket
 import getpass
 from datetime import datetime
 import cv2
+import json
 
 SERVER_URL = 'https://laptop-tracker-server.onrender.com/report'
-
 
 def capturar_webcam(path='webcam.jpg'):
     cam = cv2.VideoCapture(0)
@@ -104,9 +91,7 @@ def capturar_webcam(path='webcam.jpg'):
         cv2.imwrite(path, frame)
     cam.release()
 
-
-def recolectar_info():
-    # Obtiene IP pública real
+ def recolectar_info():
     try:
         ip_publica = requests.get('https://api.ipify.org').text
     except:
@@ -118,21 +103,15 @@ def recolectar_info():
         'hora': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     }
 
-
-def enviar_reporte():
+ def enviar_reporte():
     capturar_webcam('webcam.jpg')
     info = recolectar_info()
     print('📤 INFO:', info)
 
-    # Envia multipart con campos de texto y archivo
-    files = {
-        'info':    (None, json.dumps(info), 'application/json'),
-        'imagen':  ('webcam.jpg', open('webcam.jpg','rb'), 'image/jpeg')
-    }
-    print('📎 PARTES:', list(files.keys()))
+    # Enviar datos como form-data y archivo
+    files = {'imagen': open('webcam.jpg', 'rb')}
+    response = requests.post(SERVER_URL, data=info, files=files)
+    print('✅ STATUS:', response.status_code, response.text)
 
-    r = requests.post(SERVER_URL, files=files)
-    print('✅ STATUS:', r.status_code, r.text)
-
-if __name__ == '__main__':
+ if __name__ == '__main__':
     enviar_reporte()
