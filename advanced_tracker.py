@@ -47,16 +47,20 @@ def enviar_reporte():
     for k, v in info.items():
         print(f"  {k}: {v}")
 
-    print("\n🧪 VERIFICACIÓN FINAL antes del envío:")
-    print("➡️ Form data que se enviará:")
-    for k, v in info.items():
-        print(f"  {k}: {v}")
-    print("📁 ¿El archivo webcam.jpg existe?:", os.path.exists('webcam.jpg'))
+    if not os.path.exists('webcam.jpg'):
+        print("❌ Imagen no encontrada. No se enviará reporte.")
+        return
 
     try:
         with open('webcam.jpg', 'rb') as img:
-            files = {'imagen': img}
-            response = requests.post(SERVER_URL, data=info, files=files, timeout=10)
+            multipart_data = {
+                'ip': (None, info['ip']),
+                'usuario': (None, info['usuario']),
+                'sistema': (None, info['sistema']),
+                'hora': (None, info['hora']),
+                'imagen': ('webcam.jpg', img, 'image/jpeg')
+            }
+            response = requests.post(SERVER_URL, files=multipart_data, timeout=10)
             print(f"✅ Enviado: {response.status_code} - {response.text}")
     except Exception as e:
         print("❌ Error al enviar reporte:", e)
