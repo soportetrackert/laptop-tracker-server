@@ -1,3 +1,4 @@
+# app.py (Servidor Flask definitivo con depuración adicional)
 import os
 import json
 from flask import Flask, request, render_template, send_from_directory, jsonify
@@ -32,6 +33,7 @@ def report():
     print('📥 FORM DATA:', request.form)
     print('📥 FILES   :', request.files)
 
+    # Captura de datos
     ip = request.form.get('ip', 'No recibido')
     usuario = request.form.get('usuario', 'No recibido')
     sistema = request.form.get('sistema', 'No recibido')
@@ -48,9 +50,11 @@ def report():
     else:
         print('⚠️ No se recibió archivo de imagen')
 
+    # Datos del reporte
     nuevo = { 'ip': ip, 'usuario': usuario, 'sistema': sistema, 'hora': hora, 'imagen': filename }
     print('💾 Reporte a guardar:', nuevo)
 
+    # Guardar el reporte en el archivo JSON
     reportes = []
     if os.path.exists(REPORT_FILE):
         with open(REPORT_FILE, 'r', encoding='utf-8') as f:
