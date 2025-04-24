@@ -1,5 +1,3 @@
-# ... (importaciones y configuraciones previas)
-
 @app.route('/report', methods=['POST'])
 def report():
     print('🔔 Se recibió un reporte')
@@ -10,11 +8,14 @@ def report():
     sistema = request.form.get('sistema', 'No recibido')
     hora = request.form.get('hora', 'No recibido')
 
-    nuevo = { 'ip': ip, 'usuario': usuario, 'sistema': sistema, 'hora': hora }
+    nuevo = {
+        'ip': ip,
+        'usuario': usuario,
+        'sistema': sistema,
+        'hora': hora,
+        'imagen': None  # Siempre None mientras no se use imagen
+    }
 
-    print('💾 Reporte a guardar:', nuevo)
-
-    # Guardar el reporte
     reportes = []
     if os.path.exists(REPORT_FILE):
         with open(REPORT_FILE, 'r', encoding='utf-8') as f:
@@ -22,6 +23,6 @@ def report():
     reportes.insert(0, nuevo)
     with open(REPORT_FILE, 'w', encoding='utf-8') as f:
         json.dump(reportes, f, ensure_ascii=False, indent=4)
+    print('✅ Reporte guardado:', nuevo)
 
-    print('✅ reportes.json actualizado')
     return jsonify(status='ok')
