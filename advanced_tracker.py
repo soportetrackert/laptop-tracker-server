@@ -1,9 +1,10 @@
-# advanced_tracker.py (versión final corregida)
+# advanced_tracker.py (versión corregida final)
 import requests
 import platform
 import getpass
 from datetime import datetime
 import cv2
+import os
 
 SERVER_URL = 'https://laptop-tracker-server.onrender.com/report'
 
@@ -25,7 +26,7 @@ def capturar_webcam(path='webcam.jpg'):
 
 def recolectar_info():
     try:
-        ip_publica = requests.get('https://api.ipify.org', timeout=5).text
+        ip_publica = requests.get('https://api.ipify.org', timeout=5).text.strip()
     except Exception as e:
         print("⚠️ No se pudo obtener IP pública:", e)
         ip_publica = 'No obtenido'
@@ -42,7 +43,8 @@ def recolectar_info():
 def enviar_reporte():
     capturar_webcam('webcam.jpg')
     info = recolectar_info()
-    print("📤 Datos recolectados:")
+    
+    print("📤 Enviando datos:")
     for k, v in info.items():
         print(f"  {k}: {v}")
 
@@ -50,7 +52,7 @@ def enviar_reporte():
         with open('webcam.jpg', 'rb') as img:
             files = {'imagen': img}
             response = requests.post(SERVER_URL, data=info, files=files, timeout=10)
-            print(f"✅ Enviado: {response.status_code} - {response.text}")
+            print(f"✅ Respuesta del servidor: {response.status_code} - {response.text}")
     except Exception as e:
         print("❌ Error al enviar reporte:", e)
 
