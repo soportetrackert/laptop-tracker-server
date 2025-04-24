@@ -1,47 +1,36 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <title>📍 Reportes de Rastreo de Laptops</title>
-  <style>
-    body { font-family: Arial, sans-serif; margin: 20px; background: #f5f5f5; }
-    h1 { text-align: center; }
-    table { width: 100%; border-collapse: collapse; background: #fff; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
-    th, td { padding: 12px; border: 1px solid #ddd; text-align: center; }
-    th { background: #007bff; color: #fff; }
-    tr:hover { background: #f1f1f1; }
-    img { max-height: 80px; border-radius: 4px; }
-  </style>
+    <meta charset="UTF-8">
+    <title>📍 Reportes de Rastreo de Laptops</title>
+    <style>
+        body { font-family: sans-serif; padding: 2rem; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 10px; border: 1px solid #ccc; }
+        th { background-color: #f4f4f4; }
+    </style>
 </head>
 <body>
-  <h1>📍 Reportes de Rastreo de Laptops</h1>
-  <table>
-    <thead>
-      <tr><th>IP</th><th>Usuario</th><th>Sistema</th><th>Hora</th><th>Imagen</th></tr>
-    </thead>
-    <tbody>
-      {% if reports %}
-        {% for r in reports %}
-          <tr>
-            <td>{{ r.ip }}</td>
-            <td>{{ r.usuario }}</td>
-            <td>{{ r.sistema }}</td>
-            <td>{{ r.hora }}</td>
-            <td>
-              {% if r.imagen %}
-                <a href="{{ url_for('uploaded_file', filename=r.imagen) }}" target="_blank">
-                  <img src="{{ url_for('uploaded_file', filename=r.imagen) }}" alt="img">
-                </a>
-              {% else %}
-                Sin Imagen
-              {% endif %}
-            </td>
-          </tr>
-        {% endfor %}
-      {% else %}
-        <tr><td colspan="5">No hay reportes.</td></tr>
-      {% endif %}
-    </tbody>
-  </table>
+    <h1>📍 Reportes de Rastreo de Laptops</h1>
+    {% if reports %}
+        <table>
+            <tr>
+                <th>IP</th>
+                <th>Usuario</th>
+                <th>Sistema</th>
+                <th>Hora</th>
+            </tr>
+            {% for r in reports %}
+            <tr>
+                <td>{{ r.ip }}</td>
+                <td>{{ r.usuario }}</td>
+                <td>{{ r.sistema }}</td>
+                <td>{{ r.hora }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+    {% else %}
+        <p>No hay reportes.</p>
+    {% endif %}
 </body>
 </html>
