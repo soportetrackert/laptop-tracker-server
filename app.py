@@ -1,45 +1,58 @@
-from flask import Flask, render_template, request
-import requests
-import platform
-import getpass
-from datetime import datetime
+from flask import Flask, request, render_template, redirect, url_for, Response
 import os
+from datetime import datetime
+from functools import wraps
 
 app = Flask(__name__)
 
-# Inicialización de una lista para almacenar los reportes (puede ser reemplazada por una base de datos)
 reportes = []
 
-# Ruta principal para mostrar los reportes
+# Autenticación básica
+USERNAME = 'admin'
+PASSWORD = 'Ecodelta2030@'
+
+def check_auth(username, password):
+    return username == USERNAME and password == PASSWORD
+
+def authenticate():
+    return Response(
+        'Acceso no autorizado. Proporcione credenciales válidas.', 401,
+        {'WWW-Authenticate': 'Basic realm="Login Required"'}
+    )
+
+def requires_auth(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        auth = request.authorization
+        if not auth or not check_auth(auth.username, auth.password):
+            return authenticate()
+        return f(*args, **kwargs)
+    return decorated
+
 @app.route('/')
+@requires_auth
 def index():
     return render_template('index.html', reportes=reportes)
 
-# Ruta para recibir los reportes
 @app.route('/report', methods=['POST'])
-def recibir_reporte():
-    # Recibir los datos del reporte desde el cliente
-    ip = request.form.get('ip')
-    usuario = request.form.get('usuario')
-    sistema = request.form.get('sistema')
-    hora = request.form.get('hora')
-    ubicacion = request.form.get('ubicacion')  # Asegúrate de enviar este campo desde el cliente
+def report():
+    ip = request.form.get('ip') or 'No recibido'
+    usuario = request.form.get('usuario') or 'No recibido'
+    sistema = request.form.get('sistema') or 'No recibido'
+    hora = request.form.get('hora') or datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    ubicacion = request.form.get('ubicacion') or 'No disponible'
 
-    # Almacenar el reporte en la lista
-    if ip and usuario and sistema and hora and ubicacion:
-        reportes.append({
-            'ip': ip,
-            'usuario': usuario,
-            'sistema': sistema,
-            'hora': hora,
-            'ubicacion': ubicacion
-        })
-        return 'Reporte recibido', 200
-    return 'Error en los datos', 400
+    reporte = {
+        'ip': ip,
+        'usuario': usuario,
+        'sistema': sistema,
+        'hora': hora,
+        'ubicacion': ubicacion
+    }
+    reportes.append(reporte)
+    print(f"[REPORTE RECIBIDO] {reporte}")
+    return 'Reporte recibido', 200
 
-# Configurar el puerto y host según las necesidades de Render
-if __name__ == "__main__":
-    # Obtener el puerto desde la variable de entorno, si está disponible
+if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))
-    # Ejecutar la app en todas las interfaces de red con el puerto adecuado
-    app.run(host="0.0.0.0", port=port, debug=True)
+    app.run(host='0.0.0.0', port=port)
