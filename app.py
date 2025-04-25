@@ -1,5 +1,5 @@
-from flask import Flask, request, render_template, jsonify
-from datetime import datetime
+from flask import Flask, request, render_template
+import os
 
 app = Flask(__name__)
 
@@ -7,28 +7,26 @@ reportes = []
 
 @app.route('/')
 def index():
-    return render_template('index.html', reportes=reportes[::-1])
+    return render_template('index.html', reportes=reportes)
 
 @app.route('/report', methods=['POST'])
-def recibir_reporte():
+def report():
     ip = request.form.get('ip', 'No recibido')
     usuario = request.form.get('usuario', 'No recibido')
     sistema = request.form.get('sistema', 'No recibido')
-    hora = request.form.get('hora', datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+    hora = request.form.get('hora', 'No recibido')
 
-    reporte = {
+    datos = {
         'ip': ip,
         'usuario': usuario,
         'sistema': sistema,
         'hora': hora
     }
 
-    reportes.append(reporte)
+    print("📥 Reporte recibido:", datos)
+    reportes.insert(0, datos)
     return 'Reporte recibido', 200
 
-@app.route('/api/reportes')
-def api_reportes():
-    return jsonify(reportes[::-1])
-
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=10000)
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port)
