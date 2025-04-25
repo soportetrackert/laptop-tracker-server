@@ -1,10 +1,8 @@
 from flask import Flask, request, render_template
-from datetime import datetime
-import os
 
 app = Flask(__name__)
 
-# Lista global para almacenar los reportes
+# Simulamos una base de datos o lista para almacenar los reportes
 reportes = []
 
 @app.route('/')
@@ -12,24 +10,26 @@ def index():
     return render_template('index.html', reportes=reportes)
 
 @app.route('/report', methods=['POST'])
-def recibir_datos():
-    ip = request.form.get('ip', 'No recibido')
-    usuario = request.form.get('usuario', 'No recibido')
-    sistema = request.form.get('sistema', 'No recibido')
-    hora = request.form.get('hora', datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+def report():
+    ip = request.form.get('ip')
+    usuario = request.form.get('usuario')
+    sistema = request.form.get('sistema')
+    hora = request.form.get('hora')
+    ubicacion = request.form.get('ubicacion')  # Recibe el campo de geolocalización
 
-    # Agregar a la lista
+    # Agregar los datos del reporte a la lista
     reportes.append({
         'ip': ip,
         'usuario': usuario,
         'sistema': sistema,
-        'hora': hora
+        'hora': hora,
+        'ubicacion': ubicacion
     })
 
-    print(f"[📥 NUEVO REPORTE] {ip} - {usuario} - {sistema} - {hora}")
-    return 'Reporte recibido', 200
+    # Aquí se pueden almacenar los datos en una base de datos o hacer cualquier otra acción
+    print(f"IP: {ip}, Usuario: {usuario}, Sistema: {sistema}, Hora: {hora}, Ubicación: {ubicacion}")
 
-# Configuración para que Render detecte el puerto
+    return "Reporte recibido"
+
 if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 5000))
-    app.run(host='0.0.0.0', port=port)
+    app.run(debug=True)
