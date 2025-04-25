@@ -1,52 +1,40 @@
-from flask import Flask, request, render_template, jsonify
-import os
-import json
+import requests
+import platform
+import getpass
+from datetime import datetime
+import time
 
-app = Flask(__name__)
+SERVER_URL = 'https://laptop-tracker-server.onrender.com/report'
 
-# Rutas
-REPORT_FILE = os.path.join(app.root_path, 'reportes.json')
+def recolectar_info():
+    try:
+        ip_publica = requests.get('https://api.ipify.org', timeout=5).text
+    except Exception as e:
+        print("⚠️ No se pudo obtener IP pública:", e)
+        ip_publica = 'No obtenido'
+    usuario = getpass.getuser()
+    sistema = f"{platform.system()} {platform.release()}"
+    hora = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    return {
+        'ip': ip_publica,
+        'usuario': usuario,
+        'sistema': sistema,
+        'hora': hora
+    }
 
-@app.route('/')
-def index():
-    reportes = []
-    if os.path.exists(REPORT_FILE):
-        with open(REPORT_FILE, 'r', encoding='utf-8') as f:
-            reportes = json.load(f)
-    return render_template('index.html', reports=reportes)
-
-@app.route('/report', methods=['POST'])
-def report():
-    print('🔔 Reporte recibido')
-    print('📥 FORM:', request.form)
-
-    ip = request.form.get('ip', 'No recibido')
-    usuario = request.form.get('usuario', 'No recibido')
-    sistema = request.form.get('sistema', 'No recibido')
-    hora = request.form.get('hora', 'No recibido')
-
-    nuevo = { 'ip': ip, 'usuario': usuario, 'sistema': sistema, 'hora': hora }
-
-    reportes = []
-    if os.path.exists(REPORT_FILE):
-        with open(REPORT_FILE, 'r', encoding='utf-8') as f:
-            reportes = json.load(f)
-
-    reportes.insert(0, nuevo)
-    with open(REPORT_FILE, 'w', encoding='utf-8') as f:
-        json.dump(reportes, f, ensure_ascii=False, indent=4)
-
-    return jsonify(status='ok')
-
-@app.route('/debug_reportes')
-def debug_reportes():
-    if os.path.exists(REPORT_FILE):
-        with open(REPORT_FILE, 'r', encoding='utf-8') as f:
-            data = f.read()
-    else:
-        data = '[]'
-    return app.response_class(data, mimetype='application/json')
+def enviar_reporte():
+    info = recolectar_info()
+    print("\n📤 Enviando reporte:")
+    for k, v in info.items():
+        print(f"  {k}: {v}")
+    try:
+        response = requests.post(SERVER_URL, data=info, timeout=10)
+        print(f"✅ Enviado: {response.status_code} - {response.text}")
+    except Exception as e:
+        print("❌ Error al enviar reporte:", e)
 
 if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 5000))
-    app.run(debug=True, host='0.0.0.0', port=port)
+    while True:
+        enviar_reporte()
+        print("⏳ Esperando 15 minutos para el siguiente envío...\n")
+        time.sleep(900)  # 15 minutos en segundos
