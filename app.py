@@ -1,40 +1,34 @@
-import requests
-import platform
-import getpass
+from flask import Flask, request, render_template, jsonify
 from datetime import datetime
-import time
 
-SERVER_URL = 'https://laptop-tracker-server.onrender.com/report'
+app = Flask(__name__)
 
-def recolectar_info():
-    try:
-        ip_publica = requests.get('https://api.ipify.org', timeout=5).text
-    except Exception as e:
-        print("⚠️ No se pudo obtener IP pública:", e)
-        ip_publica = 'No obtenido'
-    usuario = getpass.getuser()
-    sistema = f"{platform.system()} {platform.release()}"
-    hora = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-    return {
-        'ip': ip_publica,
+reportes = []
+
+@app.route('/')
+def index():
+    return render_template('index.html', reportes=reportes[::-1])
+
+@app.route('/report', methods=['POST'])
+def recibir_reporte():
+    ip = request.form.get('ip', 'No recibido')
+    usuario = request.form.get('usuario', 'No recibido')
+    sistema = request.form.get('sistema', 'No recibido')
+    hora = request.form.get('hora', datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+
+    reporte = {
+        'ip': ip,
         'usuario': usuario,
         'sistema': sistema,
         'hora': hora
     }
 
-def enviar_reporte():
-    info = recolectar_info()
-    print("\n📤 Enviando reporte:")
-    for k, v in info.items():
-        print(f"  {k}: {v}")
-    try:
-        response = requests.post(SERVER_URL, data=info, timeout=10)
-        print(f"✅ Enviado: {response.status_code} - {response.text}")
-    except Exception as e:
-        print("❌ Error al enviar reporte:", e)
+    reportes.append(reporte)
+    return 'Reporte recibido', 200
+
+@app.route('/api/reportes')
+def api_reportes():
+    return jsonify(reportes[::-1])
 
 if __name__ == '__main__':
-    while True:
-        enviar_reporte()
-        print("⏳ Esperando 15 minutos para el siguiente envío...\n")
-        time.sleep(900)  # 15 minutos en segundos
+    app.run(host='0.0.0.0', port=10000)
