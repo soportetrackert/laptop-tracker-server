@@ -3,72 +3,90 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>📍 Rastreo de Laptops</title>
+    <title>Laptop Tracker</title>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f0f2f5;
-            color: #333;
+            background: linear-gradient(to right, #0f2027, #203a43, #2c5364);
+            color: #ffffff;
             margin: 0;
+            padding: 0;
+        }
+        header {
+            background-color: #1e2a38;
             padding: 20px;
+            text-align: center;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
         }
         h1 {
-            text-align: center;
-            margin-bottom: 30px;
-            color: #2c3e50;
+            margin: 0;
+            font-size: 2.5rem;
+            color: #00d8ff;
+        }
+        .container {
+            padding: 20px;
+            max-width: 1000px;
+            margin: auto;
         }
         table {
             width: 100%;
             border-collapse: collapse;
-            background-color: white;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            background-color: #ffffff;
+            color: #000000;
+            border-radius: 10px;
+            overflow: hidden;
         }
         th, td {
             padding: 15px;
             text-align: left;
-            border-bottom: 1px solid #ddd;
+            border-bottom: 1px solid #ccc;
         }
         th {
-            background-color: #3498db;
-            color: white;
+            background-color: #00d8ff;
+            color: #000;
         }
         tr:hover {
             background-color: #f1f1f1;
         }
-        .no-data {
+        footer {
+            background-color: #1e2a38;
             text-align: center;
-            font-style: italic;
-            padding: 20px;
-            color: #888;
+            padding: 10px;
+            color: #ccc;
+            position: fixed;
+            width: 100%;
+            bottom: 0;
         }
     </style>
 </head>
 <body>
-    <h1>📍 Reportes de Rastreo de Laptops</h1>
-
-    {% if reports and reports|length > 0 %}
-    <table>
-        <thead>
-            <tr>
-                <th>IP</th>
-                <th>Usuario</th>
-                <th>Sistema</th>
-                <th>Hora</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for r in reports %}
-            <tr>
-                <td>{{ r.ip }}</td>
-                <td>{{ r.usuario }}</td>
-                <td>{{ r.sistema }}</td>
-                <td>{{ r.hora }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-    {% else %}
-    <div class="no-data">No hay reportes disponibles.</div>
-    {% endif %}
+    <header>
+        <h1>📍 Reportes de Rastreo de Laptops</h1>
+    </header>
+    <div class="container">
+        <table>
+            <thead>
+                <tr>
+                    <th>IP</th>
+                    <th>Usuario</th>
+                    <th>Sistema</th>
+                    <th>Hora</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for reporte in reportes %}
+                <tr>
+                    <td>{{ reporte.ip }}</td>
+                    <td>{{ reporte.usuario }}</td>
+                    <td>{{ reporte.sistema }}</td>
+                    <td>{{ reporte.hora }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <footer>
+        Laptop Tracker &copy; 2025 - Desarrollado por Franklin 🚀
+    </footer>
 </body>
 </html>
