@@ -1,8 +1,6 @@
 from flask import Flask, request, render_template
-import os
 
 app = Flask(__name__)
-
 reportes = []
 
 @app.route('/')
@@ -15,18 +13,14 @@ def report():
     usuario = request.form.get('usuario', 'No recibido')
     sistema = request.form.get('sistema', 'No recibido')
     hora = request.form.get('hora', 'No recibido')
+    ubicacion = request.form.get('ubicacion', 'No recibido')
 
-    datos = {
+    reportes.append({
         'ip': ip,
         'usuario': usuario,
         'sistema': sistema,
-        'hora': hora
-    }
+        'hora': hora,
+        'ubicacion': ubicacion
+    })
 
-    print("📥 Reporte recibido:", datos)
-    reportes.insert(0, datos)
     return 'Reporte recibido', 200
-
-if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 5000))
-    app.run(host='0.0.0.0', port=port)
